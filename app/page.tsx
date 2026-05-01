@@ -14,7 +14,7 @@ export default function Home() {
           <Link href="/executive">Abrir Dashboard Ejecutivo</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/executive">Abrir en otra vista</Link>
+          <Link href="/captura">Captura diaria (Sadama / Amadeus)</Link>
         </Button>
       </div>
     </main>

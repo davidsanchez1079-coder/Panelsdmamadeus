@@ -11,6 +11,8 @@ type AlertItem = {
 
 const KPI_LABELS: Record<string, string> = {
   flujo_total: 'Flujo total',
+  flujo_sadama: 'Flujo Sadama',
+  flujo_amadeus: 'Flujo Amadeus',
   bancos_total: 'Bancos',
   inventario_total: 'Inventario',
   cxc_total: 'CXC',

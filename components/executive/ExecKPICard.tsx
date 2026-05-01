@@ -10,6 +10,13 @@ import { YoYBadge } from './YoYBadge';
 
 type SparkPoint = { x: string; y: number };
 
+const SPARK_THEME: Record<string, { stroke: string; fill: string }> = {
+  bancos_total: { stroke: 'var(--chart-spark-bancos-stroke)', fill: 'var(--chart-spark-bancos-fill)' },
+  inventario_total: { stroke: 'var(--chart-spark-inventario-stroke)', fill: 'var(--chart-spark-inventario-fill)' },
+  cxc_total: { stroke: 'var(--chart-spark-cxc-stroke)', fill: 'var(--chart-spark-cxc-fill)' },
+  cxp_total: { stroke: 'var(--chart-spark-cxp-stroke)', fill: 'var(--chart-spark-cxp-fill)' },
+};
+
 type SparkTipProps = {
   active?: boolean;
   payload?: ReadonlyArray<{ payload?: unknown }>;
@@ -53,6 +60,11 @@ export function ExecKPICard({
         : `${formatChartDayNumeric(first.x)} → ${formatChartDayNumeric(last.x)}`
       : null;
 
+  const sparkStyle = SPARK_THEME[kpiKey] ?? {
+    stroke: 'var(--chart-line-flujo)',
+    fill: 'var(--chart-spark-fill)',
+  };
+
   const minY = sparkline.length ? Math.min(...sparkline.map((p) => p.y)) : 0;
   const maxY = sparkline.length ? Math.max(...sparkline.map((p) => p.y)) : 0;
   const scaleHint =
@@ -89,12 +101,12 @@ export function ExecKPICard({
               <Area
                 type="monotone"
                 dataKey="y"
-                stroke="var(--chart-line-flujo)"
-                fill="var(--chart-spark-fill)"
+                stroke={sparkStyle.stroke}
+                fill={sparkStyle.fill}
                 strokeWidth={2}
                 activeDot={{
                   r: 4,
-                  fill: 'var(--chart-line-flujo)',
+                  fill: sparkStyle.stroke,
                   stroke: 'var(--color-background)',
                   strokeWidth: 2,
                 }}

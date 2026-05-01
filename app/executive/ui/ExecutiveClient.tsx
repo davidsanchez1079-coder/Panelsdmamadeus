@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import type { FlujoDailyComparativo } from '@/lib/dailyFlujoComparativo';
+import type { FlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
 import type { DailyKpiPoint } from '@/lib/dailyKpisFromRow';
 import { formatChartDayNumeric, formatCierreLabel } from '@/lib/dateDisplay';
 import {
@@ -90,28 +90,44 @@ const axisTick = { fontSize: 10, fill: 'var(--chart-tick)' };
 
 function FlujoTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload as { bucketEnd?: string; flujo?: number } | undefined;
+  const row = payload[0]?.payload as { bucketEnd?: string } | undefined;
   if (!row?.bucketEnd) return null;
+  const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
   return (
     <TooltipShell>
       <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
       <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
-      <div className="mt-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Flujo total (MXN)</div>
-      <div className="text-sm font-semibold tabular-nums">{formatMXN(row.flujo)}</div>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Flujo (MXN)</div>
+      <ul className="mt-1 space-y-1 text-xs">
+        {items.map((p) => (
+          <li key={String(p.dataKey)} className="flex justify-between gap-3 tabular-nums">
+            <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
+            <span>{formatMXN(p.value as number)}</span>
+          </li>
+        ))}
+      </ul>
     </TooltipShell>
   );
 }
 
 function InventarioTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload as { bucketEnd?: string; inventario?: number } | undefined;
+  const row = payload[0]?.payload as { bucketEnd?: string } | undefined;
   if (!row?.bucketEnd) return null;
+  const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
   return (
     <TooltipShell>
       <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
       <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
-      <div className="mt-2 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Inventario (MXN)</div>
-      <div className="text-sm font-semibold tabular-nums">{formatMXN(row.inventario)}</div>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Inventario (MXN)</div>
+      <ul className="mt-1 space-y-1 text-xs">
+        {items.map((p) => (
+          <li key={String(p.dataKey)} className="flex justify-between gap-3 tabular-nums">
+            <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
+            <span>{formatMXN(p.value as number)}</span>
+          </li>
+        ))}
+      </ul>
     </TooltipShell>
   );
 }
@@ -152,13 +168,13 @@ function BancosTooltip({ active, payload }: ChartTooltipProps) {
 export function ExecutiveClient({
   meta,
   view,
-  dailyComparativo,
+  dailyFlujo,
   dailyKpisSeries,
   asOfDay,
 }: {
   meta: JsonMeta;
   view: ExecutiveViewModel;
-  dailyComparativo: FlujoDailyComparativo | null;
+  dailyFlujo: FlujoDailyComparativoBundle;
   dailyKpisSeries: DailyKpiPoint[];
   asOfDay: string;
 }) {
@@ -176,8 +192,14 @@ export function ExecutiveClient({
   const yoy = source.yoy;
   const kpis = source.kpis;
 
-  const flujoActual = typeof (kpis as Record<string, unknown>).flujo_total === 'number' ? (kpis as Record<string, number>).flujo_total : 0;
-  const flujoYoY = pickYoY(yoy, 'flujo_total');
+  const kpisRec = kpis as Record<string, unknown>;
+  const kpiNum = (key: string) => (typeof kpisRec[key] === 'number' ? (kpisRec[key] as number) : 0);
+  const flujoActualTotal = kpiNum('flujo_total');
+  const flujoActualSadama = kpiNum('flujo_sadama');
+  const flujoActualAmadeus = kpiNum('flujo_amadeus');
+  const yoyFlujoTotal = pickYoY(yoy, 'flujo_total');
+  const yoyFlujoSadama = pickYoY(yoy, 'flujo_sadama');
+  const yoyFlujoAmadeus = pickYoY(yoy, 'flujo_amadeus');
 
   const cierreLabel = useMemo(() => {
     const iso = mode === 'last_month' ? view.lastMonth.fecha_cierre : view.ytd.fecha_corte;
@@ -201,10 +223,7 @@ export function ExecutiveClient({
 
   const lastBucket = chartRows[chartRows.length - 1];
 
-  const flujoChart = useMemo(
-    () => chartRows.map((r) => ({ ...r, name: r.label, flujo: r.flujo_total })),
-    [chartRows],
-  );
+  const flujoChart = chartRows;
 
   const bancosChart = useMemo(
     () =>
@@ -219,10 +238,7 @@ export function ExecutiveClient({
     [chartRows],
   );
 
-  const inventarioChart = useMemo(
-    () => chartRows.map((r) => ({ name: r.label, bucketEnd: r.bucketEnd, inventario: r.inventario_total })),
-    [chartRows],
-  );
+  const inventarioChart = chartRows;
 
   const cxpDonut = useMemo(() => {
     const base = cxpDonutFromDailyPoint(lastBucket);
@@ -265,14 +281,38 @@ export function ExecutiveClient({
         </div>
       ) : null}
 
-      <HeroFlujoBanner
-        actual={flujoActual}
-        anterior={flujoYoY?.anterior ?? null}
-        delta={flujoYoY?.delta ?? null}
-        yoyDeltaPct={flujoYoY?.delta_pct ?? null}
-        daily={dailyComparativo}
-        className="min-h-[140px]"
-      />
+      <div className="grid gap-3 lg:grid-cols-3">
+        <HeroFlujoBanner
+          title="Flujo total"
+          yoyKpiKey="flujo_total"
+          actual={flujoActualTotal}
+          anterior={yoyFlujoTotal?.anterior ?? null}
+          delta={yoyFlujoTotal?.delta ?? null}
+          yoyDeltaPct={yoyFlujoTotal?.delta_pct ?? null}
+          daily={dailyFlujo.total}
+          className="min-h-[140px]"
+        />
+        <HeroFlujoBanner
+          title="Flujo Sadama"
+          yoyKpiKey="flujo_sadama"
+          actual={flujoActualSadama}
+          anterior={yoyFlujoSadama?.anterior ?? null}
+          delta={yoyFlujoSadama?.delta ?? null}
+          yoyDeltaPct={yoyFlujoSadama?.delta_pct ?? null}
+          daily={dailyFlujo.sadama}
+          className="min-h-[140px]"
+        />
+        <HeroFlujoBanner
+          title="Flujo Amadeus"
+          yoyKpiKey="flujo_amadeus"
+          actual={flujoActualAmadeus}
+          anterior={yoyFlujoAmadeus?.anterior ?? null}
+          delta={yoyFlujoAmadeus?.delta ?? null}
+          yoyDeltaPct={yoyFlujoAmadeus?.delta_pct ?? null}
+          daily={dailyFlujo.amadeus}
+          className="min-h-[140px]"
+        />
+      </div>
 
       <DashboardChartFilters
         className="mt-4"
@@ -309,9 +349,9 @@ export function ExecutiveClient({
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">Flujo total (MXN) por fecha</div>
+          <div className="mb-2 text-sm font-semibold">Flujo (MXN) por fecha · Sadama, Amadeus y total</div>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Eje inferior: fecha de corte (dd/mm/aaaa). Pasa el mouse por un punto o usa la banda gris para acercar el rango.
+            Tres series consolidadas. Eje inferior: fecha de corte (dd/mm/aaaa). Pasa el mouse o usa la banda gris para acercar el rango.
           </p>
           <div className="chart-root w-full text-foreground" style={{ height: chartPlotHeight }}>
             {mounted && flujoChart.length > 0 ? (
@@ -334,11 +374,31 @@ export function ExecutiveClient({
                     tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
                   />
                   <Tooltip content={<FlujoTooltip />} cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} iconType="line" />
                   <Line
                     type="monotone"
-                    dataKey="flujo"
-                    stroke="var(--chart-line-flujo)"
+                    dataKey="flujo_sadama"
+                    name="Sadama"
+                    stroke="var(--chart-line-flujo-sadama)"
                     strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="flujo_amadeus"
+                    name="Amadeus"
+                    stroke="var(--chart-line-flujo-amadeus)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="flujo_total"
+                    name="Total"
+                    stroke="var(--chart-line-flujo)"
+                    strokeWidth={2.5}
                     dot={
                       flujoChart.length <= 12
                         ? {
@@ -377,7 +437,9 @@ export function ExecutiveClient({
             caption="Montos exactos por fecha de corte (el más reciente arriba)."
             columns={[
               { key: 'bucketEnd', label: 'Fecha' },
-              { key: 'flujo', label: 'Flujo (MXN)', align: 'right' },
+              { key: 'flujo_sadama', label: 'Sadama', align: 'right' },
+              { key: 'flujo_amadeus', label: 'Amadeus', align: 'right' },
+              { key: 'flujo_total', label: 'Total', align: 'right' },
             ]}
           />
         </div>
@@ -498,9 +560,9 @@ export function ExecutiveClient({
         </div>
 
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">Inventario total (MXN) por fecha</div>
+          <div className="mb-2 text-sm font-semibold">Inventario (MXN) por fecha · Sadama, Amadeus y total</div>
           <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Fechas en formato dd/mm/aaaa; revisa la tabla para el par fecha–monto exacto.
+            Tres series (mismo criterio de color que flujo: Sadama / Amadeus / total). Eje: dd/mm/aaaa.
           </p>
           <div className="chart-root w-full text-foreground" style={{ height: chartPlotHeight }}>
             {mounted && inventarioChart.length > 0 ? (
@@ -523,11 +585,31 @@ export function ExecutiveClient({
                     tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
                   />
                   <Tooltip content={<InventarioTooltip />} cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 4 }} iconType="line" />
                   <Line
                     type="monotone"
-                    dataKey="inventario"
-                    stroke="var(--chart-line-inventario)"
+                    dataKey="inventario_sadama"
+                    name="Sadama"
+                    stroke="var(--chart-line-flujo-sadama)"
                     strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="inventario_amadeus"
+                    name="Amadeus"
+                    stroke="var(--chart-line-flujo-amadeus)"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="inventario_total"
+                    name="Total"
+                    stroke="var(--chart-line-inventario)"
+                    strokeWidth={2.5}
                     dot={
                       inventarioChart.length <= 12
                         ? {
@@ -563,10 +645,12 @@ export function ExecutiveClient({
           </div>
           <ChartDataTable
             rows={inventarioChart}
-            caption="Inventario total por fecha de corte (más reciente arriba)."
+            caption="Inventario por fecha de corte (más reciente arriba)."
             columns={[
               { key: 'bucketEnd', label: 'Fecha' },
-              { key: 'inventario', label: 'Inventario (MXN)', align: 'right' },
+              { key: 'inventario_sadama', label: 'Sadama', align: 'right' },
+              { key: 'inventario_amadeus', label: 'Amadeus', align: 'right' },
+              { key: 'inventario_total', label: 'Total', align: 'right' },
             ]}
           />
         </div>

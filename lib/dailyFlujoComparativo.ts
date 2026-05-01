@@ -1,7 +1,10 @@
 import { format } from 'date-fns';
 
 import type { DatosRowMinimal } from './flujoFromRow';
-import { flujoTotalFromDatosRow } from './flujoFromRow';
+import { flujoBreakdownFromDatosRow, flujoTotalFromDatosRow } from './flujoFromRow';
+
+/** Serie diaria a consolidar en el monitor tipo hero. */
+export type FlujoDailyKind = 'total' | 'sadama' | 'amadeus';
 
 export interface FlujoDailyPoint {
   fecha: string;
@@ -22,6 +25,12 @@ export interface FlujoDailyComparativo {
   monthStart: FlujoDailyPoint;
   lastFive: FlujoDailyPointWithDelta[];
 }
+
+export type FlujoDailyComparativoBundle = {
+  total: FlujoDailyComparativo | null;
+  sadama: FlujoDailyComparativo | null;
+  amadeus: FlujoDailyComparativo | null;
+};
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -59,13 +68,27 @@ function withVersusPrevious(slice: FlujoDailyPoint[], all: FlujoDailyPoint[]): F
   });
 }
 
-export function buildFlujoDailyComparativo(rows: unknown[], asOf: Date): FlujoDailyComparativo | null {
+function flujoFromRowByKind(row: DatosRowMinimal, kind: FlujoDailyKind): number | null {
+  if (kind === 'total') return flujoTotalFromDatosRow(row);
+  const b = flujoBreakdownFromDatosRow(row);
+  if (!b) return null;
+  return kind === 'sadama' ? b.sadama : b.amadeus;
+}
+
+/**
+ * @param kind `total` = flujo consolidado; `sadama` / `amadeus` = parte del desglose diario.
+ */
+export function buildFlujoDailyComparativo(
+  rows: unknown[],
+  asOf: Date,
+  kind: FlujoDailyKind = 'total',
+): FlujoDailyComparativo | null {
   const asOfDay = format(asOf, 'yyyy-MM-dd');
   const calendarMonth = format(asOf, 'yyyy-MM');
   const deduped = dedupeByFecha(rows as DatosRowMinimal[]);
   const points: FlujoDailyPoint[] = [];
   for (const r of deduped) {
-    const flujo = flujoTotalFromDatosRow(r);
+    const flujo = flujoFromRowByKind(r, kind);
     if (flujo == null || !Number.isFinite(flujo)) continue;
     const fecha = r.fecha as string;
     if (fecha > asOfDay) continue;
@@ -89,5 +112,13 @@ export function buildFlujoDailyComparativo(rows: unknown[], asOf: Date): FlujoDa
     last,
     monthStart,
     lastFive,
+  };
+}
+
+export function buildFlujoDailyComparativoBundle(rows: unknown[], asOf: Date): FlujoDailyComparativoBundle {
+  return {
+    total: buildFlujoDailyComparativo(rows, asOf, 'total'),
+    sadama: buildFlujoDailyComparativo(rows, asOf, 'sadama'),
+    amadeus: buildFlujoDailyComparativo(rows, asOf, 'amadeus'),
   };
 }

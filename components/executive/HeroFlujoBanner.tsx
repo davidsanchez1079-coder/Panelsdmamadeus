@@ -5,7 +5,7 @@ import { formatMXN, formatPct } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { YoYBadge } from './YoYBadge';
 
-const FLOJO_POLARITY = getPolarity('flujo_total');
+export type HeroFlujoYoyKey = 'flujo_total' | 'flujo_sadama' | 'flujo_amadeus';
 
 function deltaToneClass(dir: ReturnType<typeof getDeltaDirection>) {
   return dir === 'good'
@@ -24,6 +24,8 @@ function signedMxn(n: number | null) {
 }
 
 export function HeroFlujoBanner({
+  title,
+  yoyKpiKey,
   actual,
   yoyDeltaPct,
   anterior,
@@ -31,6 +33,8 @@ export function HeroFlujoBanner({
   daily,
   className,
 }: {
+  title: string;
+  yoyKpiKey: HeroFlujoYoyKey;
   actual: number;
   anterior: number | null | undefined;
   delta: number | null | undefined;
@@ -38,6 +42,7 @@ export function HeroFlujoBanner({
   daily: FlujoDailyComparativo | null;
   className?: string;
 }) {
+  const polarity = getPolarity(yoyKpiKey);
   const sem = getSemaforo(yoyDeltaPct);
   const semBar =
     sem === 'pos'
@@ -68,9 +73,9 @@ export function HeroFlujoBanner({
     vsMonthStartDelta == null || vsMonthStartDelta === 0
       ? ('neutral' as const)
       : vsMonthStartPct != null
-        ? getDeltaDirection(FLOJO_POLARITY, vsMonthStartPct)
-        : getDeltaDirection(FLOJO_POLARITY, vsMonthStartDelta > 0 ? 1 : -1);
-  const yoyDeltaDir = getDeltaDirection(FLOJO_POLARITY, yoyDeltaPct);
+        ? getDeltaDirection(polarity, vsMonthStartPct)
+        : getDeltaDirection(polarity, vsMonthStartDelta > 0 ? 1 : -1);
+  const yoyDeltaDir = getDeltaDirection(polarity, yoyDeltaPct);
 
   return (
     <section
@@ -84,7 +89,7 @@ export function HeroFlujoBanner({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Flujo total
+            {title}
             {daily ? (
               <span className="text-zinc-500 dark:text-zinc-500">
                 {' '}
@@ -121,10 +126,10 @@ export function HeroFlujoBanner({
                       p.delta == null || p.delta === 0
                         ? 'neutral'
                         : p.deltaPct != null
-                          ? getDeltaDirection(FLOJO_POLARITY, p.deltaPct)
+                          ? getDeltaDirection(polarity, p.deltaPct)
                           : p.delta > 0
-                            ? getDeltaDirection(FLOJO_POLARITY, 1)
-                            : getDeltaDirection(FLOJO_POLARITY, -1);
+                            ? getDeltaDirection(polarity, 1)
+                            : getDeltaDirection(polarity, -1);
                     const tone = deltaToneClass(dir);
                     return (
                       <li
@@ -159,7 +164,7 @@ export function HeroFlujoBanner({
             <span className={cn('tabular-nums font-medium', delta == null ? 'text-zinc-900 dark:text-zinc-100' : deltaToneClass(yoyDeltaDir))}>
               {delta == null ? '—' : formatMXN(delta)}
             </span>
-            <YoYBadge kpiKey="flujo_total" deltaPct={yoyDeltaPct} />
+            <YoYBadge kpiKey={yoyKpiKey} deltaPct={yoyDeltaPct} />
           </div>
         </div>
 

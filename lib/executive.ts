@@ -221,7 +221,8 @@ export function getPolarity(kpiKey: string): Polarity {
   if (kpiKey.startsWith('cxp')) return 'negative';
   if (kpiKey.startsWith('flujo')) return 'positive';
   if (kpiKey.includes('bancos')) return 'positive';
-  if (kpiKey.includes('inventario')) return 'positive';
+  /* Menos inventario suele ser mejor (capital, obsolescencia); ↑% YoY → malo (rojo). */
+  if (kpiKey.includes('inventario')) return 'negative';
   if (kpiKey.includes('cxc')) return 'positive';
   return 'neutral';
 }

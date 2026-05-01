@@ -12,25 +12,38 @@
   --background: 255 255 255;
   --foreground: 9 9 11;
 
-  /* Gráficas Recharts: contraste en modo claro (líneas/áreas visibles sobre fondo blanco) */
-  --chart-line: #27272a;
-  --chart-line-flujo: #27272a;
-  --chart-line-inventario: #3f3f46;
-  --chart-line-soft: #3f3f46;
-  --chart-grid: rgba(39, 39, 42, 0.14);
-  --chart-brush: #71717a;
-  --chart-brush-area: rgba(113, 113, 122, 0.22);
-  --chart-tick: #52525b;
-  --chart-cursor: rgba(39, 39, 42, 0.35);
-  --chart-spark-fill: rgba(39, 39, 42, 0.22);
-  --chart-pie-0: #27272a;
-  --chart-pie-1: #52525b;
-  --chart-pie-2: #71717a;
-  --chart-pie-3: #a1a1aa;
-  --chart-pie-4: #3f3f46;
-  --chart-banco-a: #3f3f46;
-  --chart-banco-b: #52525b;
-  --chart-banco-c: #27272a;
+  /* Gráficas Recharts — modo claro: colores saturados (no escala de grises) */
+  --chart-line: #0369a1;
+  --chart-line-flujo: #0369a1;
+  --chart-line-flujo-sadama: #15803d;
+  --chart-line-flujo-amadeus: #6d28d9;
+  --chart-line-inventario: #be185d;
+  --chart-line-soft: #0c4a6e;
+  --chart-grid: rgba(100, 116, 139, 0.22);
+  --chart-brush: #0ea5e9;
+  --chart-brush-area: rgba(14, 165, 233, 0.22);
+  --chart-tick: #475569;
+  --chart-cursor: rgba(14, 165, 233, 0.45);
+  --chart-spark-fill: rgba(3, 105, 161, 0.2);
+  /* Mini KPI sparklines por métrica */
+  --chart-spark-bancos-stroke: #0d9488;
+  --chart-spark-bancos-fill: rgba(13, 148, 136, 0.22);
+  --chart-spark-inventario-stroke: #7c3aed;
+  --chart-spark-inventario-fill: rgba(124, 58, 237, 0.2);
+  --chart-spark-cxc-stroke: #2563eb;
+  --chart-spark-cxc-fill: rgba(37, 99, 235, 0.2);
+  --chart-spark-cxp-stroke: #ea580c;
+  --chart-spark-cxp-fill: rgba(234, 88, 12, 0.2);
+  /* Dona CXP */
+  --chart-pie-0: #0284c7;
+  --chart-pie-1: #7c3aed;
+  --chart-pie-2: #059669;
+  --chart-pie-3: #d97706;
+  --chart-pie-4: #e11d48;
+  /* Bancos apilados */
+  --chart-banco-a: #0ea5e9;
+  --chart-banco-b: #8b5cf6;
+  --chart-banco-c: #f59e0b;
   --chart-pie-stroke: #ffffff;
 
   --muted: 244 244 245;
@@ -59,6 +72,8 @@
   /* Líneas principales: tonos distintos (flujo vs inventario) */
   --chart-line: #38bdf8;
   --chart-line-flujo: #38bdf8;
+  --chart-line-flujo-sadama: #4ade80;
+  --chart-line-flujo-amadeus: #a78bfa;
   --chart-line-inventario: #c4b5fd;
   --chart-line-soft: #7dd3fc;
   --chart-grid: rgba(56, 189, 248, 0.1);
@@ -67,6 +82,14 @@
   --chart-tick: #d4d4d8;
   --chart-cursor: rgba(56, 189, 248, 0.5);
   --chart-spark-fill: rgba(56, 189, 248, 0.2);
+  --chart-spark-bancos-stroke: #2dd4bf;
+  --chart-spark-bancos-fill: rgba(45, 212, 191, 0.22);
+  --chart-spark-inventario-stroke: #c4b5fd;
+  --chart-spark-inventario-fill: rgba(196, 181, 253, 0.22);
+  --chart-spark-cxc-stroke: #60a5fa;
+  --chart-spark-cxc-fill: rgba(96, 165, 250, 0.22);
+  --chart-spark-cxp-stroke: #fb923c;
+  --chart-spark-cxp-fill: rgba(251, 146, 60, 0.22);
   /* Dona: paleta contrastada */
   --chart-pie-0: #38bdf8;
   --chart-pie-1: #a78bfa;

@@ -1,5 +1,5 @@
 import type { DatosRowMinimal } from './flujoFromRow';
-import { flujoTotalFromDatosRow } from './flujoFromRow';
+import { flujoBreakdownFromDatosRow, flujoTotalFromDatosRow } from './flujoFromRow';
 
 function num(x: unknown): number {
   return typeof x === 'number' && Number.isFinite(x) ? x : 0;
@@ -8,11 +8,15 @@ function num(x: unknown): number {
 export interface DailyKpiPoint {
   fecha: string;
   flujo_total: number;
+  flujo_sadama: number;
+  flujo_amadeus: number;
   bancos_total: number;
   bajio_mxn: number;
   hsbc: number;
   bajio_usd_mxn: number;
   inventario_total: number;
+  inventario_sadama: number;
+  inventario_amadeus: number;
   cxc_total: number;
   cxp_total: number;
   cxp_sandvik: number;
@@ -32,6 +36,9 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
 
   const flujo = flujoTotalFromDatosRow(row);
   if (flujo == null || !Number.isFinite(flujo)) return null;
+  const flujoBreakdown = flujoBreakdownFromDatosRow(row);
+  const flujo_sadama = flujoBreakdown?.sadama ?? 0;
+  const flujo_amadeus = flujoBreakdown?.amadeus ?? 0;
 
   const cxpA = a.cxp as Record<string, unknown> | undefined;
   let totalCxpA = 0;
@@ -83,11 +90,15 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
   return {
     fecha,
     flujo_total: flujo,
+    flujo_sadama,
+    flujo_amadeus,
     bancos_total,
     bajio_mxn: bajioMxn,
     hsbc,
     bajio_usd_mxn,
     inventario_total: invS + invA,
+    inventario_sadama: invS,
+    inventario_amadeus: invA,
     cxc_total: cxcS + cxcA,
     cxp_total: cxpS + totalCxpA,
     cxp_sandvik: sand,

@@ -12,7 +12,8 @@ export function ChartDataTable({
   caption,
   className,
 }: {
-  rows: Record<string, unknown>[];
+  /** Filas de gráficas (p. ej. ChartRow); se indexan por `key` de columnas. */
+  rows: object[];
   columns: ChartTableColumn[];
   caption?: string;
   className?: string;
@@ -41,14 +42,15 @@ export function ChartDataTable({
           </thead>
           <tbody>
             {[...rows].reverse().map((r, i) => {
-              const fecha = typeof r.bucketEnd === 'string' ? r.bucketEnd : `row-${i}`;
+              const rec = r as Record<string, unknown>;
+              const fecha = typeof rec.bucketEnd === 'string' ? rec.bucketEnd : `row-${i}`;
               return (
                 <tr
                   key={`${fecha}-${i}`}
                   className="border-b border-zinc-200 odd:bg-white even:bg-zinc-100/90 dark:border-zinc-600/35 dark:odd:bg-zinc-950/80 dark:even:bg-slate-900/40"
                 >
                   {columns.map((c) => {
-                    const raw = r[c.key];
+                    const raw = rec[c.key];
                     let cell: string;
                     if (c.key === 'bucketEnd' && typeof raw === 'string') {
                       cell = formatChartDayNumeric(raw);
