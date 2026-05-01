@@ -1,5 +1,4 @@
 import * as React from 'react';
-import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 
@@ -31,8 +30,7 @@ export function Button({
   if (asChild) {
     // Conveniencia: permite usar <Button asChild><Link/></Button>
     // sin depender de librerías extra.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const child = (props as any).children as React.ReactElement | undefined;
+    const child = props.children as unknown as React.ReactElement<{ className?: string }> | undefined;
     if (!child) return null;
     return React.cloneElement(child, {
       className: cn(base, sizes, variants, className, child.props?.className),

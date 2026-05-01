@@ -14,6 +14,7 @@ export function ExecKPICard({
   deltaPct,
   sparkline,
   href,
+  showChart = true,
 }: {
   title: string;
   kpiKey: string;
@@ -21,6 +22,7 @@ export function ExecKPICard({
   deltaPct: number | null | undefined;
   sparkline: SparkPoint[];
   href: string;
+  showChart?: boolean;
 }) {
   return (
     <Link
@@ -39,18 +41,22 @@ export function ExecKPICard({
       </div>
 
       <div className="mt-3 h-[50px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparkline}>
-            <Area
-              type="monotone"
-              dataKey="y"
-              stroke="currentColor"
-              fill="currentColor"
-              className="text-zinc-900/20 dark:text-zinc-100/20"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {showChart ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sparkline}>
+              <Area
+                type="monotone"
+                dataKey="y"
+                stroke="currentColor"
+                fill="currentColor"
+                className="text-zinc-900/20 dark:text-zinc-100/20"
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full w-full rounded-md bg-zinc-100 dark:bg-zinc-900" />
+        )}
       </div>
 
       <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Click para ver detalle</div>

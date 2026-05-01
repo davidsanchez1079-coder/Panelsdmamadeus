@@ -9,20 +9,32 @@ export interface YoYDelta {
   delta_pct: number; // 0-100
 }
 
-export interface ExecutiveKpis {
+export interface MonthlyAggregate {
+  yyyymm: string; // YYYY-MM
+  fecha_cierre?: string; // ISO YYYY-MM-DD
+  dias_con_data?: number;
   flujo_total?: number;
+  flujo_sadama?: number;
+  flujo_amadeus?: number;
   bancos_total?: number;
   inventario_total?: number;
   cxc_total?: number;
   cxp_total?: number;
+  cxp_sandvik?: number;
+  cxp_vargus?: number;
+  cxp_mexicana?: number;
+  cxp_otros?: number;
+  bajio_usd_mxn?: number;
+  bajio_mxn?: number;
+  hsbc?: number;
+  banco_sadama?: number;
+  inventarios_sadama?: number;
+  inventarios_amadeus?: number;
   tc?: number;
+  tc_min?: number;
+  tc_max?: number;
+  // Permite campos futuros sin romper.
   [k: string]: unknown;
-}
-
-export interface MonthlyAggregate {
-  yyyymm: string; // YYYY-MM
-  fecha_cierre?: string; // ISO YYYY-MM-DD
-  kpis: ExecutiveKpis;
 }
 
 export interface MonthlyYoY {
@@ -38,7 +50,7 @@ export interface ExecutiveData {
     last_month: {
       yyyymm: string;
       fecha_cierre: string;
-      kpis: ExecutiveKpis;
+      kpis: MonthlyAggregate;
       yoy: Record<string, YoYDelta>;
       hasYoY: boolean;
     };
@@ -47,7 +59,7 @@ export interface ExecutiveData {
       previous_year: number;
       fecha_corte: string;
       comparativo: {
-        kpis: ExecutiveKpis;
+        kpis: Record<string, unknown>;
         yoy: Record<string, YoYDelta>;
       };
     };
@@ -84,6 +96,6 @@ export function getDeltaDirection(polarity: Polarity, deltaPct: number | null | 
 
 export async function loadExecutive(): Promise<ExecutiveData> {
   const data = (await import('../data/sadama_amadeus_executive.json')).default;
-  return data as ExecutiveData;
+  return data as unknown as ExecutiveData;
 }
 
