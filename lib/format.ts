@@ -32,3 +32,14 @@ export function formatPct(n: number | null | undefined) {
   return n < 0 ? `(${s.replace('+', '')})` : s;
 }
 
+/** Eje Y de gráficas: montos compactos manteniendo escala en MXN. */
+export function formatMXNAxis(n: number | null | undefined) {
+  if (n == null || !Number.isFinite(n)) return '';
+  if (Object.is(n, -0)) n = 0;
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return '$' + formatNumber(n / 1_000_000_000, { maximumFractionDigits: 1 }) + 'MM';
+  if (abs >= 1_000_000) return '$' + formatNumber(n / 1_000_000, { maximumFractionDigits: 1 }) + 'M';
+  if (abs >= 1_000) return '$' + formatNumber(n / 1_000, { maximumFractionDigits: 0 }) + 'k';
+  return '$' + formatNumber(n, { maximumFractionDigits: 0 });
+}
+

@@ -1,13 +1,22 @@
-import { format, parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { format, subDays } from 'date-fns';
 
-import { loadExecutive } from '@/lib/executive';
+import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
+import { buildFlujoDailyComparativo } from '@/lib/dailyFlujoComparativo';
+import { formatCierreLabel } from '@/lib/dateDisplay';
+import { getExecutiveViewModel, loadExecutive } from '@/lib/executive';
+import { loadPanelV1 } from '@/lib/panelV1';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
 export default async function ExecutivePage() {
-  const data = await loadExecutive();
-  const cierre = data.executive.last_month.fecha_cierre;
-  const cierreLabel = cierre ? format(parseISO(cierre), "d 'de' MMMM yyyy", { locale: es }) : '—';
+  // Regla operativa: el dashboard se muestra “hasta ayer” para evitar cortes del día en curso incompletos.
+  const asOf = subDays(new Date(), 1);
+  const asOfDay = format(asOf, 'yyyy-MM-dd');
+  const [data, v1] = await Promise.all([loadExecutive(), loadPanelV1()]);
+  const view = getExecutiveViewModel(data, asOf);
+  const dailyComparativo = buildFlujoDailyComparativo(v1.datos.rows, asOf);
+  const dailyKpisSeries = buildDailyKpisSeries(v1.datos.rows, asOfDay);
+  const cierre = view.lastMonth.fecha_cierre;
+  const cierreLabel = formatCierreLabel(cierre, view.lastMonth.yyyymm);
 
   return (
     <main className="min-h-dvh">
@@ -20,7 +29,13 @@ export default async function ExecutivePage() {
         </div>
       </div>
 
-      <ExecutiveClient data={data} />
+      <ExecutiveClient
+        meta={data.meta}
+        view={view}
+        dailyComparativo={dailyComparativo}
+        dailyKpisSeries={dailyKpisSeries}
+        asOfDay={asOfDay}
+      />
     </main>
   );
 }
