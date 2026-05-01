@@ -30,3 +30,11 @@ export function formatShortFecha(isoDay: string): string {
   if (!isValid(d)) return isoDay;
   return format(d, 'd MMM yy', { locale: es });
 }
+
+/** Fecha numérica clara para ejes y tablas (día/mes/año). */
+export function formatChartDayNumeric(isoDay: string): string {
+  if (!isoDay || !ISO_DAY.test(isoDay)) return isoDay || '—';
+  const d = parseISO(isoDay);
+  if (!isValid(d)) return isoDay;
+  return format(d, 'dd/MM/yyyy', { locale: es });
+}

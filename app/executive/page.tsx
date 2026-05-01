@@ -20,11 +20,13 @@ export default async function ExecutivePage() {
 
   return (
     <main className="min-h-dvh">
-      <div className="border-b bg-background">
+      <div className="border-b border-zinc-200/90 bg-background dark:border-white/[0.07] dark:bg-zinc-950/70 dark:backdrop-blur-md dark:supports-[backdrop-filter]:bg-zinc-950/50">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4">
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">Dashboard Ejecutivo</div>
-            <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">Cierre: {cierreLabel}</div>
+            <div className="truncate bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-sm font-semibold text-transparent dark:from-sky-200 dark:via-white dark:to-sky-300">
+              Dashboard Ejecutivo
+            </div>
+            <div className="truncate text-xs text-zinc-500 dark:text-sky-200/70">Cierre: {cierreLabel}</div>
           </div>
         </div>
       </div>

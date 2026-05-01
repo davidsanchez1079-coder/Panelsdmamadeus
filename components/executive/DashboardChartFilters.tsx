@@ -20,7 +20,7 @@ export function DashboardChartFilters({
   return (
     <div
       className={cn(
-        'flex flex-col gap-3 rounded-xl border bg-background p-3 sm:flex-row sm:flex-wrap sm:items-end',
+        'dashboard-panel flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:flex-wrap sm:items-end',
         className,
       )}
     >

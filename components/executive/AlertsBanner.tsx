@@ -40,7 +40,7 @@ export function AlertsBanner({
   if (items.length === 0) return null;
 
   return (
-    <section className={cn('rounded-xl border bg-background p-3', className)} aria-label="Alertas">
+    <section className={cn('dashboard-panel rounded-xl border border-border bg-background p-3', className)} aria-label="Alertas">
       <div className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">Alertas</div>
       <div className="grid gap-2 md:grid-cols-2">
         {items.map((it) => {
@@ -48,10 +48,10 @@ export function AlertsBanner({
           const dir = getDeltaDirection(polarity, it.delta.delta_pct);
           const tone =
             dir === 'bad'
-              ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100'
+              ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-400/50 dark:bg-red-950/35 dark:text-red-50 dark:shadow-[0_0_20px_-4px_rgba(239,68,68,0.35)]'
               : dir === 'good'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100'
-                : 'border-zinc-200 bg-zinc-50 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-zinc-100';
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-400/45 dark:bg-emerald-950/35 dark:text-emerald-50 dark:shadow-[0_0_20px_-4px_rgba(16,185,129,0.3)]'
+                : 'border-zinc-200 bg-zinc-50 text-zinc-900 dark:border-sky-500/30 dark:bg-slate-900/40 dark:text-zinc-100';
 
           return (
             <div key={it.key} className={cn('rounded-lg border p-3', tone)}>
