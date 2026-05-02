@@ -1,6 +1,7 @@
 /**
  * Reconstruye `monthly`, `yoy_months` y el bloque `executive` a partir de `datos.rows`
- * (misma lógica de flujos diarios que el panel; agregación mensual: flujos sumados, stocks último día).
+ * (misma lógica de flujos diarios que el panel). Por mes: **flujo** = valor del **último día**
+ * con datos (nivel al cierre, no suma de días); stocks (bancos, inventarios, etc.) = último día.
  */
 import type { DatosRow } from './types';
 import { dailyKpisFromDatosRow } from './dailyKpisFromRow';
@@ -60,21 +61,17 @@ function aggregateOneMonth(monthRows: DatosRow[]): MonthlyAggregate | null {
   const last = sorted[sorted.length - 1];
   if (!last?.fecha) return null;
 
-  let sumFlujo = 0;
-  let sumSadama = 0;
-  let sumAmadeus = 0;
   let tcSum = 0;
   let tcMin = Infinity;
   let tcMax = -Infinity;
+  let tcN = 0;
 
   for (const r of sorted) {
     const k = dailyKpisFromDatosRow(r as DatosRowMinimal);
     if (!k) continue;
-    sumFlujo += k.flujo_total;
-    sumSadama += k.flujo_sadama;
-    sumAmadeus += k.flujo_amadeus;
     const t = num(r.tc);
     tcSum += t;
+    tcN += 1;
     tcMin = Math.min(tcMin, t);
     tcMax = Math.max(tcMax, t);
   }
@@ -83,15 +80,15 @@ function aggregateOneMonth(monthRows: DatosRow[]): MonthlyAggregate | null {
   if (!lastK) return null;
 
   const n = sorted.length;
-  const avgTc = n > 0 ? tcSum / n : num(last.tc);
+  const avgTc = tcN > 0 ? tcSum / tcN : num(last.tc);
 
   return {
     yyyymm: last.fecha.slice(0, 7),
     fecha_cierre: last.fecha,
     dias_con_data: n,
-    flujo_total: sumFlujo,
-    flujo_sadama: sumSadama,
-    flujo_amadeus: sumAmadeus,
+    flujo_total: lastK.flujo_total,
+    flujo_sadama: lastK.flujo_sadama,
+    flujo_amadeus: lastK.flujo_amadeus,
     bancos_total: lastK.bancos_total,
     inventario_total: lastK.inventario_total,
     cxc_total: lastK.cxc_total,
