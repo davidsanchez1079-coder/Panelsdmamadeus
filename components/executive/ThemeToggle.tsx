@@ -5,13 +5,34 @@ import { useTheme } from 'next-themes';
 
 import { Button } from '@/components/ui/button';
 
+/**
+ * next-themes resuelve el tema en el cliente; cualquier etiqueta que dependa de `theme`
+ * debe montarse solo tras `useEffect` para evitar mismatch SSR/hidratación.
+ */
 export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, systemTheme } = useTheme();
-  const current = theme === 'system' ? systemTheme : theme;
-  const isDark = current === 'dark';
 
   useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled
+        className="pointer-events-none opacity-90"
+        aria-busy="true"
+        title="Cargando tema…"
+      >
+        Tema
+      </Button>
+    );
+  }
+
+  const current = theme === 'system' ? systemTheme : theme;
+  const isDark = current === 'dark';
 
   return (
     <Button
@@ -21,7 +42,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       title="Cambiar modo claro/oscuro"
     >
-      {mounted ? (isDark ? 'Modo claro' : 'Modo oscuro') : 'Tema'}
+      {isDark ? 'Modo claro' : 'Modo oscuro'}
     </Button>
   );
 }
