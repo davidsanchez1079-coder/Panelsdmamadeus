@@ -4,9 +4,12 @@ import { format, subDays } from 'date-fns';
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
 import { buildFlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
 import { formatCierreLabel } from '@/lib/dateDisplay';
-import { getExecutiveViewModel, loadExecutive } from '@/lib/executive';
+import { getExecutiveViewModel } from '@/lib/executive';
+import { loadExecutive } from '@/lib/loadExecutive';
 import { loadPanelV1 } from '@/lib/panelV1';
 import { ExecutiveClient } from './ui/ExecutiveClient';
+
+export const dynamic = 'force-dynamic';
 
 export default async function ExecutivePage() {
   // Regla operativa: el dashboard se muestra “hasta ayer” para evitar cortes del día en curso incompletos.

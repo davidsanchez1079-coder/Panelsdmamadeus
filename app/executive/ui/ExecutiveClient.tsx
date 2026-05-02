@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import type { FlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
@@ -11,11 +11,12 @@ import { formatChartDayNumeric, formatCierreLabel } from '@/lib/dateDisplay';
 import {
   buildFilteredChartSeries,
   rangePresetShortLabel,
+  type ChartCustomDateRange,
   type ChartGranularity,
   type ChartRangePreset,
   type ChartRow,
 } from '@/lib/chartSeriesFilters';
-import { cxpDonutFromDailyPoint } from '@/lib/cxpDonutFromDaily';
+import { cxpProveedoresConPct } from '@/lib/cxpDonutFromDaily';
 import {
   Area,
   AreaChart,
@@ -34,7 +35,7 @@ import {
 
 import type { ExecutiveViewModel, YoYDelta } from '@/lib/executive';
 import type { JsonMeta } from '@/lib/types';
-import { formatMXN, formatMXNAxis } from '@/lib/format';
+import { formatMXN, formatMXNAxis, formatPct } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { DashboardChartFilters } from '@/components/executive/DashboardChartFilters';
 import { ExecutiveSwitch, type ExecutiveMode } from '@/components/executive/ExecutiveSwitch';
@@ -132,6 +133,34 @@ function InventarioTooltip({ active, payload }: ChartTooltipProps) {
   );
 }
 
+type PieTooltipProps = {
+  active?: boolean;
+  payload?: ReadonlyArray<{
+    name?: string;
+    value?: number;
+    payload?: { name?: string; value?: number; pct?: number; fill?: string };
+  }>;
+};
+
+function CxpPieTooltip({ active, payload }: PieTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const item = payload[0]!;
+  const name = (item.payload?.name ?? item.name) as string;
+  const value = (typeof item.value === 'number' ? item.value : item.payload?.value) as number;
+  const pct = item.payload?.pct;
+  return (
+    <TooltipShell>
+      <div className="text-sm font-semibold leading-tight">{name}</div>
+      <div className="mt-1 text-sm font-medium tabular-nums">{formatMXN(value)}</div>
+      {pct != null && Number.isFinite(pct) ? (
+        <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          {formatPct(pct)} del total CXP
+        </div>
+      ) : null}
+    </TooltipShell>
+  );
+}
+
 function BancosTooltip({ active, payload }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload as
@@ -183,6 +212,20 @@ export function ExecutiveClient({
   const [mounted, setMounted] = useState(false);
   const [rangePreset, setRangePreset] = useState<ChartRangePreset>('year_natural');
   const [granularity, setGranularity] = useState<ChartGranularity>('auto');
+  const [customRange, setCustomRange] = useState<ChartCustomDateRange>({ start: '', end: '' });
+
+  const onRangePresetChange = (v: ChartRangePreset) => {
+    setRangePreset(v);
+    if (v === 'custom_range') {
+      setCustomRange((prev) => {
+        if (prev.start && prev.end) return prev;
+        return {
+          start: format(subDays(parseISO(asOfDay), 29), 'yyyy-MM-dd'),
+          end: asOfDay,
+        };
+      });
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -217,8 +260,15 @@ export function ExecutiveClient({
   }, [meta.generated]);
 
   const chartRows = useMemo(
-    () => buildFilteredChartSeries(dailyKpisSeries, asOfDay, rangePreset, granularity),
-    [dailyKpisSeries, asOfDay, rangePreset, granularity],
+    () =>
+      buildFilteredChartSeries(
+        dailyKpisSeries,
+        asOfDay,
+        rangePreset,
+        granularity,
+        rangePreset === 'custom_range' ? customRange : null,
+      ),
+    [dailyKpisSeries, asOfDay, rangePreset, granularity, customRange],
   );
 
   const lastBucket = chartRows[chartRows.length - 1];
@@ -240,12 +290,13 @@ export function ExecutiveClient({
 
   const inventarioChart = chartRows;
 
-  const cxpDonut = useMemo(() => {
-    const base = cxpDonutFromDailyPoint(lastBucket);
-    return base.map((d, i) => ({ ...d, fill: PIE_FILLS[i % PIE_FILLS.length] }));
+  const cxpVista = useMemo(() => {
+    const { total, rows } = cxpProveedoresConPct(lastBucket);
+    const pie = rows.map((r, i) => ({ ...r, fill: PIE_FILLS[i % PIE_FILLS.length] }));
+    return { total, rows, pie };
   }, [lastBucket]);
 
-  const periodHint = `${rangePresetShortLabel(rangePreset)} · corte máx. ${asOfDay}`;
+  const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
 
   const onExportPdf = () => {
     window.print();
@@ -318,8 +369,11 @@ export function ExecutiveClient({
         className="mt-4"
         rangePreset={rangePreset}
         granularity={granularity}
-        onRangeChange={setRangePreset}
+        customRange={customRange}
+        asOfDay={asOfDay}
+        onRangeChange={onRangePresetChange}
         onGranularityChange={setGranularity}
+        onCustomRangeChange={setCustomRange}
       />
 
       <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{periodHint}</div>
@@ -533,14 +587,27 @@ export function ExecutiveClient({
 
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
           <div className="mb-2 text-sm font-semibold">CXP por proveedor (último corte del período)</div>
+          {lastBucket ? (
+            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+              Total CXP al corte{' '}
+              <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">{formatMXN(cxpVista.total)}</span>{' '}
+              · participación por proveedor en % sobre ese total.
+            </p>
+          ) : null}
           <div className="chart-root h-[240px] w-full text-foreground">
-            {mounted && cxpDonut.some((s) => s.value > 0) ? (
+            {mounted && cxpVista.pie.some((s) => s.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Tooltip formatter={(v) => (typeof v === 'number' ? formatMXN(v) : String(v))} />
-                  <Legend />
+                  <Tooltip content={<CxpPieTooltip />} />
+                  <Legend
+                    formatter={(value, entry) => {
+                      const p = entry.payload as { pct?: number; name?: string } | undefined;
+                      if (p?.pct != null && Number.isFinite(p.pct)) return `${value} (${formatPct(p.pct)})`;
+                      return String(value);
+                    }}
+                  />
                   <Pie
-                    data={cxpDonut}
+                    data={cxpVista.pie}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={50}
@@ -556,6 +623,37 @@ export function ExecutiveClient({
           </div>
           {lastBucket ? (
             <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Basado en fecha {lastBucket.bucketEnd}.</div>
+          ) : null}
+          {lastBucket && cxpVista.rows.length > 0 ? (
+            <div className="mt-3 rounded-md border border-zinc-200 dark:border-zinc-700">
+              <table className="w-full border-collapse text-xs">
+                <thead className="bg-zinc-100 dark:bg-zinc-900/80">
+                  <tr>
+                    <th className="border-b border-zinc-200 px-2 py-1.5 text-left font-semibold dark:border-zinc-700">
+                      Proveedor
+                    </th>
+                    <th className="border-b border-zinc-200 px-2 py-1.5 text-right font-semibold dark:border-zinc-700">
+                      Monto (MXN)
+                    </th>
+                    <th className="border-b border-zinc-200 px-2 py-1.5 text-right font-semibold dark:border-zinc-700">
+                      % del total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cxpVista.rows.map((r) => (
+                    <tr
+                      key={r.name}
+                      className="border-b border-zinc-100 odd:bg-white even:bg-zinc-50 last:border-0 dark:border-zinc-800 dark:odd:bg-zinc-950/80 dark:even:bg-zinc-900/40"
+                    >
+                      <td className="px-2 py-1">{r.name}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{formatMXN(r.value)}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{formatPct(r.pct)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : null}
         </div>
 

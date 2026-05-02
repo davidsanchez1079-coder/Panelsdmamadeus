@@ -1,5 +1,7 @@
 /** Utilidades para la pantalla de captura diaria (esquema `DatosRow`). */
 
+import type { DatosRow } from './types';
+
 type RowLike = { fecha?: string; tc?: number; _row?: number };
 
 export function suggestTcForFecha(rows: unknown[], isoDate: string): number | null {
@@ -84,5 +86,33 @@ export function buildDatosRowFromCapture(input: {
       },
     },
     tc: parseMoney(input.tc),
+  };
+}
+
+/** Rellena el formulario de captura a partir de una fila guardada (edición). */
+export function captureStringsFromDatosRow(row: DatosRow) {
+  return {
+    fecha: row.fecha,
+    tc: String(row.tc),
+    sadama: {
+      banco: String(row.sadama.banco),
+      inventarios: String(row.sadama.inventarios),
+      cxc: String(row.sadama.cxc),
+      cxp: String(row.sadama.cxp),
+      fact_dia_mes: String(row.sadama.fact_dia_mes),
+    },
+    amadeus: {
+      inventarios: String(row.amadeus.inventarios),
+      cxc: String(row.amadeus.cxc),
+      fact_dia_mes: String(row.amadeus.fact_dia_mes),
+      compras_mes: String(row.amadeus.compras_mes),
+      sandvik: String(row.amadeus.cxp.sandvik),
+      vargus: String(row.amadeus.cxp.vargus),
+      mexicana: String(row.amadeus.cxp.mexicana),
+      otros: String(row.amadeus.cxp.otros),
+      bajio_usd: String(row.amadeus.bancos.bajio_usd),
+      bajio_mxn: String(row.amadeus.bancos.bajio_mxn),
+      hsbc: String(row.amadeus.bancos.hsbc),
+    },
   };
 }

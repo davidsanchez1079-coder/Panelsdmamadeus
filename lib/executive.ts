@@ -92,9 +92,12 @@ export interface ExecutiveViewModel {
 }
 
 /** El JSON trae delta_pct como fracción (0.12 = 12%). Lo pasamos a puntos (12) para badges y semáforos. */
-export function scaleYoYForDisplay(yoy: Record<string, YoYDelta>): Record<string, YoYDelta> {
+export function scaleYoYForDisplay(
+  yoy: Record<string, YoYDelta | null | undefined>,
+): Record<string, YoYDelta> {
   const out: Record<string, YoYDelta> = {};
   for (const [k, v] of Object.entries(yoy)) {
+    if (!v || typeof v !== 'object') continue;
     const dp = v.delta_pct;
     const scaled =
       typeof dp === 'number' && dp !== 0 && Math.abs(dp) <= 1 ? dp * 100 : dp;
@@ -242,10 +245,5 @@ export function getDeltaDirection(polarity: Polarity, deltaPct: number | null | 
   const isUp = deltaPct > 0;
   const isGood = isGoodUp ? isUp : !isUp;
   return isGood ? ('good' as const) : ('bad' as const);
-}
-
-export async function loadExecutive(): Promise<ExecutiveData> {
-  const data = (await import('../data/sadama_amadeus_executive.json')).default;
-  return data as unknown as ExecutiveData;
 }
 

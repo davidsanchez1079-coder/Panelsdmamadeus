@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { loadPanelV1 } from '@/lib/panelV1';
 import { CaptureClient } from './CaptureClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CapturaPage() {
   const v1 = await loadPanelV1();
   const rows = v1.datos.rows as unknown[];

@@ -18,7 +18,13 @@ export type ChartRangePreset =
   | 'calendar_7d'
   | 'month_natural'
   | 'year_natural'
-  | 'last_12_months';
+  | 'last_12_months'
+  | 'custom_range';
+
+/** Rango personalizado (YYYY-MM-DD); usado solo si `preset === 'custom_range'`. */
+export type ChartCustomDateRange = { start: string; end: string };
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export type ChartGranularity = 'day' | 'week' | 'month' | 'auto';
 
@@ -35,6 +41,7 @@ export const CHART_RANGE_OPTIONS: { value: ChartRangePreset; label: string }[] =
   { value: 'month_natural', label: 'Mes en curso (natural)' },
   { value: 'year_natural', label: 'Año en curso (natural)' },
   { value: 'last_12_months', label: 'Últimos 12 meses' },
+  { value: 'custom_range', label: 'Rango de fechas (personalizado)' },
 ];
 
 export const CHART_GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
@@ -65,6 +72,7 @@ export function sliceSeriesByPreset(
   fullSeriesAsc: DailyKpiPoint[],
   asOfDay: string,
   preset: ChartRangePreset,
+  customRange?: ChartCustomDateRange | null,
 ): DailyKpiPoint[] {
   const eligible = fullSeriesAsc.filter((p) => p.fecha <= asOfDay);
   if (eligible.length === 0) return [];
@@ -93,6 +101,22 @@ export function sliceSeriesByPreset(
       const end = parseISO(asOfDay);
       const start = format(startOfMonth(subMonths(end, 11)), 'yyyy-MM-dd');
       return eligible.filter((p) => p.fecha >= start);
+    }
+    case 'custom_range': {
+      let start = customRange?.start ?? '';
+      let end = customRange?.end ?? '';
+      if (!ISO_DAY.test(start) || !ISO_DAY.test(end)) {
+        const endD = parseISO(asOfDay);
+        start = format(subDays(endD, 29), 'yyyy-MM-dd');
+        end = asOfDay;
+      }
+      if (start > end) {
+        const t = start;
+        start = end;
+        end = t;
+      }
+      const endCap = end > asOfDay ? asOfDay : end;
+      return eligible.filter((p) => p.fecha >= start && p.fecha <= endCap);
     }
     default:
       return eligible;
@@ -155,12 +179,19 @@ export function buildFilteredChartSeries(
   asOfDay: string,
   preset: ChartRangePreset,
   granularity: ChartGranularity,
+  customRange?: ChartCustomDateRange | null,
 ): ChartRow[] {
-  const sliced = sliceSeriesByPreset(fullSeriesAsc, asOfDay, preset);
+  const sliced = sliceSeriesByPreset(fullSeriesAsc, asOfDay, preset, customRange);
   const resolved = resolveChartGranularity(sliced.length, preset, granularity);
   return aggregatePoints(sliced, resolved);
 }
 
-export function rangePresetShortLabel(preset: ChartRangePreset): string {
+export function rangePresetShortLabel(
+  preset: ChartRangePreset,
+  customRange?: ChartCustomDateRange | null,
+): string {
+  if (preset === 'custom_range' && customRange?.start && customRange?.end) {
+    return `${customRange.start} → ${customRange.end}`;
+  }
   return CHART_RANGE_OPTIONS.find((o) => o.value === preset)?.label ?? preset;
 }
