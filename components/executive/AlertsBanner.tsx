@@ -17,6 +17,8 @@ const KPI_LABELS: Record<string, string> = {
   inventario_total: 'Inventario',
   cxc_total: 'CXC',
   cxp_total: 'CXP',
+  cxp_sadama: 'CXP Sadama',
+  cxp_probadores_amadeus: 'CXP AMADEUS',
   tc: 'Tipo de cambio',
 };
 

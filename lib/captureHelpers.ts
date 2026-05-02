@@ -85,6 +85,32 @@ export function amountToInputString(n: number): string {
   return String(n);
 }
 
+const emptyOtrosLineForm = (): { monto: string; proveedor: string } => ({ monto: '', proveedor: '' });
+
+/** Tres líneas para el formulario; migra `otros` legacy a la primera línea. */
+export function normalizeOtrosLinesFromRow(row: DatosRow): { monto: string; proveedor: string }[] {
+  const out = [emptyOtrosLineForm(), emptyOtrosLineForm(), emptyOtrosLineForm()];
+  const cxp = row.amadeus.cxp;
+  const lines = cxp.otros_lineas;
+  if (Array.isArray(lines)) {
+    for (let i = 0; i < 3; i++) {
+      const L = lines[i];
+      if (L && typeof L === 'object') {
+        out[i] = {
+          monto: amountToInputString(typeof L.monto === 'number' ? L.monto : 0),
+          proveedor: typeof L.proveedor === 'string' ? L.proveedor : '',
+        };
+      }
+    }
+    return out;
+  }
+  const legacy = cxp.otros;
+  if (typeof legacy === 'number' && legacy !== 0 && Number.isFinite(legacy)) {
+    out[0] = { monto: amountToInputString(legacy), proveedor: '' };
+  }
+  return out;
+}
+
 export function buildDatosRowFromCapture(input: {
   _row: number;
   fecha: string;
@@ -104,7 +130,8 @@ export function buildDatosRowFromCapture(input: {
     sandvik: string;
     vargus: string;
     mexicana: string;
-    otros: string;
+    probadores_amadeus: string;
+    otros_lineas: { monto: string; proveedor: string }[];
     bajio_usd: string;
     bajio_mxn: string;
     hsbc: string;
@@ -129,7 +156,11 @@ export function buildDatosRowFromCapture(input: {
         sandvik: parseMoney(input.amadeus.sandvik),
         vargus: parseMoney(input.amadeus.vargus),
         mexicana: parseMoney(input.amadeus.mexicana),
-        otros: parseMoney(input.amadeus.otros),
+        probadores_amadeus: parseMoney(input.amadeus.probadores_amadeus),
+        otros_lineas: input.amadeus.otros_lineas.map((line) => ({
+          monto: parseMoney(line.monto),
+          proveedor: typeof line.proveedor === 'string' ? line.proveedor.trim() : '',
+        })),
       },
       bancos: {
         bajio_usd: parseMoney(input.amadeus.bajio_usd),
@@ -161,7 +192,8 @@ export function captureStringsFromDatosRow(row: DatosRow) {
       sandvik: amountToInputString(row.amadeus.cxp.sandvik),
       vargus: amountToInputString(row.amadeus.cxp.vargus),
       mexicana: amountToInputString(row.amadeus.cxp.mexicana),
-      otros: amountToInputString(row.amadeus.cxp.otros),
+      probadores_amadeus: amountToInputString(row.amadeus.cxp.probadores_amadeus ?? 0),
+      otros_lineas: normalizeOtrosLinesFromRow(row),
       bajio_usd: amountToInputString(row.amadeus.bancos.bajio_usd),
       bajio_mxn: amountToInputString(row.amadeus.bancos.bajio_mxn),
       hsbc: amountToInputString(row.amadeus.bancos.hsbc),

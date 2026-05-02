@@ -15,6 +15,12 @@ export interface JsonMeta {
   description?: string;
 }
 
+/** Línea en CXP «Otros» (probadores): monto + nombre para reportes. */
+export interface CxpOtrosLinea {
+  monto: number;
+  proveedor: string;
+}
+
 export interface DatosRow {
   _row: number;
   fecha: string; // ISO YYYY-MM-DD
@@ -34,7 +40,12 @@ export interface DatosRow {
       sandvik: number;
       vargus: number;
       mexicana: number;
-      otros: number;
+      /** CXP línea Amadeus (probadores). */
+      probadores_amadeus?: number;
+      /** @deprecated Preferir `otros_lineas`; en datos antiguos era un solo monto. */
+      otros?: number;
+      /** Hasta 3 líneas; en reportes se suman los montos. */
+      otros_lineas?: CxpOtrosLinea[];
     };
     bancos: {
       bajio_usd: number;

@@ -3,6 +3,7 @@
  * Así, al guardar captura con ceros, la validación/análisis queda alineado con datos crudos.
  */
 import type { DatosRow } from './types';
+import { totalCxpAmadeusFromCxp } from './cxpAmadeusHelpers';
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -22,8 +23,7 @@ function dedupeByFecha(rows: DatosRow[]): DatosRow[] {
 }
 
 function cxpTotalAmadeus(a: DatosRow['amadeus']): number {
-  const c = a.cxp;
-  return c.sandvik + c.vargus + c.mexicana + c.otros;
+  return totalCxpAmadeusFromCxp(a.cxp as Record<string, unknown>);
 }
 
 function bancosAmadeusMxn(a: DatosRow['amadeus'], tc: number): number {
@@ -81,7 +81,9 @@ function buildOne(curr: DatosRow, prev: DatosRow | null): Record<string, unknown
         sandvik: curr.amadeus.cxp.sandvik,
         vargus: curr.amadeus.cxp.vargus,
         mexicana: curr.amadeus.cxp.mexicana,
+        probadores_amadeus: curr.amadeus.cxp.probadores_amadeus ?? 0,
         otros: curr.amadeus.cxp.otros,
+        otros_lineas: curr.amadeus.cxp.otros_lineas,
         total: cxpT,
       },
       compras_mes: curr.amadeus.compras_mes,

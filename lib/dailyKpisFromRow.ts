@@ -1,5 +1,10 @@
 import type { DatosRowMinimal } from './flujoFromRow';
 import { flujoBreakdownFromDatosRow, flujoTotalFromDatosRow } from './flujoFromRow';
+import {
+  probadoresAmadeusFromCxp,
+  sumOtrosMontoFromCxp,
+  totalCxpAmadeusFromCxp,
+} from './cxpAmadeusHelpers';
 
 function num(x: unknown): number {
   return typeof x === 'number' && Number.isFinite(x) ? x : 0;
@@ -19,9 +24,14 @@ export interface DailyKpiPoint {
   inventario_amadeus: number;
   cxc_total: number;
   cxp_total: number;
+  /** CXP consolidado Sadama (`sadama.cxp`). */
+  cxp_sadama: number;
   cxp_sandvik: number;
   cxp_vargus: number;
   cxp_mexicana: number;
+  /** CXP probadores — línea Amadeus (MXN). */
+  cxp_probadores_amadeus: number;
+  /** Suma de montos en «Otros» (líneas o legacy `otros`). */
   cxp_otros: number;
   /** Sadama + Amadeus: acumulado MTD del mes en la fecha de corte (no sumar días al cerrar mes). */
   facturacion_dia: number;
@@ -51,19 +61,22 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
   let sand = 0;
   let varg = 0;
   let mex = 0;
+  let prob = 0;
   let otr = 0;
   if (cxpA && typeof cxpA.total === 'number') {
     totalCxpA = cxpA.total;
     sand = num(cxpA.sandvik);
     varg = num(cxpA.vargus);
     mex = num(cxpA.mexicana);
-    otr = num(cxpA.otros);
+    prob = probadoresAmadeusFromCxp(cxpA);
+    otr = sumOtrosMontoFromCxp(cxpA);
   } else if (cxpA) {
     sand = num(cxpA.sandvik);
     varg = num(cxpA.vargus);
     mex = num(cxpA.mexicana);
-    otr = num(cxpA.otros);
-    totalCxpA = sand + varg + mex + otr;
+    prob = probadoresAmadeusFromCxp(cxpA);
+    otr = sumOtrosMontoFromCxp(cxpA);
+    totalCxpA = totalCxpAmadeusFromCxp(cxpA);
   }
 
   const b = a.bancos as Record<string, unknown> | undefined;
@@ -109,9 +122,11 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     inventario_amadeus: invA,
     cxc_total: cxcS + cxcA,
     cxp_total: cxpS + totalCxpA,
+    cxp_sadama: cxpS,
     cxp_sandvik: sand,
     cxp_vargus: varg,
     cxp_mexicana: mex,
+    cxp_probadores_amadeus: prob,
     cxp_otros: otr,
     facturacion_dia: factSadama + factAmadeus,
     facturacion_sadama_mes: factSadama,

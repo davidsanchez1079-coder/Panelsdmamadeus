@@ -1,5 +1,7 @@
 /** Flujo total desde fila de `datos.rows` (SPEC_PANEL_FINANCIERO). */
 
+import { totalCxpAmadeusFromCxp } from './cxpAmadeusHelpers';
+
 function num(x: unknown): number {
   return typeof x === 'number' && Number.isFinite(x) ? x : 0;
 }
@@ -26,9 +28,7 @@ function computeFlujoSadamaAmadeus(row: DatosRowMinimal): { sadama: number; amad
   if (cxpA && typeof cxpA.total === 'number') {
     totalCxp = cxpA.total;
   } else if (cxpA) {
-    for (const k of ['sandvik', 'vargus', 'mexicana', 'otros'] as const) {
-      totalCxp += num(cxpA[k]);
-    }
+    totalCxp = totalCxpAmadeusFromCxp(cxpA);
   }
 
   const b = a.bancos as Record<string, unknown> | undefined;

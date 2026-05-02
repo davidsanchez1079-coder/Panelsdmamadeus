@@ -58,6 +58,40 @@ function NumField({
   );
 }
 
+function TextField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="text"
+        autoComplete="off"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      />
+    </div>
+  );
+}
+
+const emptyOtrosLines = (): { monto: string; proveedor: string }[] => [
+  { monto: '', proveedor: '' },
+  { monto: '', proveedor: '' },
+  { monto: '', proveedor: '' },
+];
+
 const emptySadama = {
   banco: '',
   inventarios: '',
@@ -74,7 +108,8 @@ const emptyAmadeus = {
   sandvik: '',
   vargus: '',
   mexicana: '',
-  otros: '',
+  probadores_amadeus: '',
+  otros_lineas: emptyOtrosLines(),
   bajio_usd: '',
   bajio_mxn: '',
   hsbc: '',
@@ -262,7 +297,12 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               onChange={(v) => setSadama((p) => ({ ...p, inventarios: v }))}
             />
             <NumField id="s-cxc" label="CXC" value={sadama.cxc} onChange={(v) => setSadama((p) => ({ ...p, cxc: v }))} />
-            <NumField id="s-cxp" label="CXP" value={sadama.cxp} onChange={(v) => setSadama((p) => ({ ...p, cxp: v }))} />
+            <NumField
+              id="s-cxp"
+              label="CXP (Sadama)"
+              value={sadama.cxp}
+              onChange={(v) => setSadama((p) => ({ ...p, cxp: v }))}
+            />
             <NumField
               id="s-fact"
               label="Fact. día mes"
@@ -297,7 +337,9 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               onChange={(v) => setAmadeus((p) => ({ ...p, compras_mes: v }))}
             />
           </div>
-          <p className="mb-2 mt-4 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">CXP (proveedores)</p>
+          <p className="mb-2 mt-4 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+            CXP (proveedores Amadeus; Sadama va en su tarjeta y suma al mismo total)
+          </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <NumField
               id="a-sand"
@@ -318,11 +360,42 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               onChange={(v) => setAmadeus((p) => ({ ...p, mexicana: v }))}
             />
             <NumField
-              id="a-otr"
-              label="Otros"
-              value={amadeus.otros}
-              onChange={(v) => setAmadeus((p) => ({ ...p, otros: v }))}
+              id="a-amadeus-cxp"
+              label="AMADEUS"
+              value={amadeus.probadores_amadeus}
+              onChange={(v) => setAmadeus((p) => ({ ...p, probadores_amadeus: v }))}
             />
+          </div>
+          <p className="mb-2 mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
+            Otros: hasta tres proveedores (monto + nombre). En reportes se suman los importes de las líneas con valor.
+          </p>
+          <div className="grid gap-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="grid gap-3 sm:grid-cols-2">
+                <NumField
+                  id={`a-otr-${i}-monto`}
+                  label={`Otros ${i + 1} · monto`}
+                  value={amadeus.otros_lineas[i]!.monto}
+                  onChange={(v) =>
+                    setAmadeus((p) => ({
+                      ...p,
+                      otros_lineas: p.otros_lineas.map((line, j) => (j === i ? { ...line, monto: v } : line)),
+                    }))
+                  }
+                />
+                <TextField
+                  id={`a-otr-${i}-prov`}
+                  label={`Otros ${i + 1} · proveedor`}
+                  value={amadeus.otros_lineas[i]!.proveedor}
+                  onChange={(v) =>
+                    setAmadeus((p) => ({
+                      ...p,
+                      otros_lineas: p.otros_lineas.map((line, j) => (j === i ? { ...line, proveedor: v } : line)),
+                    }))
+                  }
+                />
+              </div>
+            ))}
           </div>
           <p className="mb-2 mt-4 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">Bancos</p>
           <div className="grid gap-3 sm:grid-cols-2">

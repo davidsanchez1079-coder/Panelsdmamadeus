@@ -23,9 +23,11 @@ export interface MonthlyAggregate {
   inventario_total?: number;
   cxc_total?: number;
   cxp_total?: number;
+  cxp_sadama?: number;
   cxp_sandvik?: number;
   cxp_vargus?: number;
   cxp_mexicana?: number;
+  cxp_probadores_amadeus?: number;
   cxp_otros?: number;
   bajio_usd_mxn?: number;
   bajio_mxn?: number;
