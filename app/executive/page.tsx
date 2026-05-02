@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { format, subDays } from 'date-fns';
+import { parse } from 'date-fns';
 
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
 import { buildFlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
 import { formatCierreLabel } from '@/lib/dateDisplay';
 import { getExecutiveViewModel } from '@/lib/executive';
+import { resolveExecutiveAsOfDay } from '@/lib/executiveAsOf';
 import { loadExecutive } from '@/lib/loadExecutive';
 import { loadPanelV1 } from '@/lib/panelV1';
 import { ExecutiveClient } from './ui/ExecutiveClient';
@@ -12,10 +13,9 @@ import { ExecutiveClient } from './ui/ExecutiveClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ExecutivePage() {
-  // Regla operativa: el dashboard se muestra “hasta ayer” para evitar cortes del día en curso incompletos.
-  const asOf = subDays(new Date(), 1);
-  const asOfDay = format(asOf, 'yyyy-MM-dd');
   const [data, v1] = await Promise.all([loadExecutive(), loadPanelV1()]);
+  const asOfDay = resolveExecutiveAsOfDay(v1.datos.rows);
+  const asOf = parse(asOfDay, 'yyyy-MM-dd', new Date());
   const view = getExecutiveViewModel(data, asOf);
   const dailyFlujo = buildFlujoDailyComparativoBundle(v1.datos.rows, asOf);
   const dailyKpisSeries = buildDailyKpisSeries(v1.datos.rows, asOfDay);
