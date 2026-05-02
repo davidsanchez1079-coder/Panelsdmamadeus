@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+/*
+ * next-themes pone la clase `.dark` en <html>. Por defecto Tailwind v4 aplica `dark:` con
+ * prefers-color-scheme, así que en “modo claro” del toggle seguían activos los estilos oscuros
+ * si el SO estaba en dark (p. ej. hero negro sobre página blanca).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --background: 255 255 255;
+  --foreground: 9 9 11;
+
+  /* Gráficas Recharts — modo claro: colores saturados (no escala de grises) */
+  --chart-line: #0369a1;
+  --chart-line-flujo: #0369a1;
+  --chart-line-flujo-sadama: #15803d;
+  --chart-line-flujo-amadeus: #6d28d9;
+  --chart-line-inventario: #be185d;
+  --chart-line-soft: #0c4a6e;
+  --chart-grid: rgba(100, 116, 139, 0.22);
+  --chart-brush: #0ea5e9;
+  --chart-brush-area: rgba(14, 165, 233, 0.22);
+  --chart-tick: #475569;
+  --chart-cursor: rgba(14, 165, 233, 0.45);
+  --chart-spark-fill: rgba(3, 105, 161, 0.2);
+  /* Mini KPI sparklines por métrica */
+  --chart-spark-bancos-stroke: #0d9488;
+  --chart-spark-bancos-fill: rgba(13, 148, 136, 0.22);
+  --chart-spark-inventario-stroke: #7c3aed;
+  --chart-spark-inventario-fill: rgba(124, 58, 237, 0.2);
+  --chart-spark-cxc-stroke: #2563eb;
+  --chart-spark-cxc-fill: rgba(37, 99, 235, 0.2);
+  --chart-spark-cxp-stroke: #ea580c;
+  --chart-spark-cxp-fill: rgba(234, 88, 12, 0.2);
+  /* Dona CXP */
+  --chart-pie-0: #0284c7;
+  --chart-pie-1: #7c3aed;
+  --chart-pie-2: #059669;
+  --chart-pie-3: #d97706;
+  --chart-pie-4: #e11d48;
+  /* Bancos apilados */
+  --chart-banco-a: #0ea5e9;
+  --chart-banco-b: #8b5cf6;
+  --chart-banco-c: #f59e0b;
+  --chart-pie-stroke: #ffffff;
+
+  --muted: 244 244 245;
+  --muted-foreground: 113 113 122;
+
+  --accent: 244 244 245;
+  --accent-foreground: 9 9 11;
+
+  --border: 228 228 231;
+  --input: 228 228 231;
+  --ring: 24 24 27;
+
+  --primary: 9 9 11;
+  --primary-foreground: 250 250 250;
+
+  --destructive: 239 68 68;
+  --destructive-foreground: 250 250 250;
+}
+
+.dark {
+  color-scheme: dark;
+  /* Base un poco más profunda que el gris plano */
+  --background: 11 14 18;
+  --foreground: 244 244 245;
+
+  /* Líneas principales: tonos distintos (flujo vs inventario) */
+  --chart-line: #38bdf8;
+  --chart-line-flujo: #38bdf8;
+  --chart-line-flujo-sadama: #4ade80;
+  --chart-line-flujo-amadeus: #a78bfa;
+  --chart-line-inventario: #c4b5fd;
+  --chart-line-soft: #7dd3fc;
+  --chart-grid: rgba(56, 189, 248, 0.1);
+  --chart-brush: #38bdf8;
+  --chart-brush-area: rgba(56, 189, 248, 0.18);
+  --chart-tick: #d4d4d8;
+  --chart-cursor: rgba(56, 189, 248, 0.5);
+  --chart-spark-fill: rgba(56, 189, 248, 0.2);
+  --chart-spark-bancos-stroke: #2dd4bf;
+  --chart-spark-bancos-fill: rgba(45, 212, 191, 0.22);
+  --chart-spark-inventario-stroke: #c4b5fd;
+  --chart-spark-inventario-fill: rgba(196, 181, 253, 0.22);
+  --chart-spark-cxc-stroke: #60a5fa;
+  --chart-spark-cxc-fill: rgba(96, 165, 250, 0.22);
+  --chart-spark-cxp-stroke: #fb923c;
+  --chart-spark-cxp-fill: rgba(251, 146, 60, 0.22);
+  /* Dona: paleta contrastada */
+  --chart-pie-0: #38bdf8;
+  --chart-pie-1: #a78bfa;
+  --chart-pie-2: #4ade80;
+  --chart-pie-3: #fbbf24;
+  --chart-pie-4: #fb7185;
+  /* Bancos apilados: tres familias de color */
+  --chart-banco-a: #38bdf8;
+  --chart-banco-b: #a78bfa;
+  --chart-banco-c: #fbbf24;
+  --chart-pie-stroke: #0c1220;
+
+  --muted: 30 35 45;
+  --muted-foreground: 180 190 205;
+
+  --accent: 39 46 58;
+  --accent-foreground: 244 244 245;
+
+  --border: 55 65 82;
+  --input: 39 39 42;
+  --ring: 212 212 216;
+
+  --primary: 250 250 250;
+  --primary-foreground: 9 9 11;
+
+  --destructive: 220 38 38;
+  --destructive-foreground: 250 250 250;
+}
+
+@theme inline {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Modo oscuro: fondo con ligera profundidad (no un solo gris plano) */
+.dark body {
+  background: linear-gradient(168deg, #0a0a0c 0%, #0c1220 42%, #0a0b10 100%);
+  background-attachment: fixed;
+}
+
+/* Tarjetas / paneles del dashboard en oscuro: relieve y borde sutil */
+.dark .dashboard-panel {
+  background: linear-gradient(155deg, rgba(39, 46, 58, 0.55) 0%, rgba(17, 19, 24, 0.92) 100%);
+  border-color: rgba(129, 140, 160, 0.35);
+  box-shadow:
+    0 4px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Ejes y textos SVG de Recharts heredan color tenue en algunos temas; forzamos legibilidad */
+.chart-root .recharts-cartesian-axis-tick-value {
+  fill: var(--chart-tick);
+}
+.chart-root .recharts-legend-item-text {
+  color: var(--color-foreground) !important;
+}
