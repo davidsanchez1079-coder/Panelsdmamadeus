@@ -40,7 +40,8 @@ function formatMesLabel(yyyymm: string): string {
 export function aggregateFacturacionPorMesCalendario(
   series: DailyKpiPoint[],
   asOfDay: string,
-  origen: FacturacionOrigen = 'combinada',
+  /** Por defecto Amadeus: mismo criterio que el reporte de facturación Amadeus (`fact_dia_mes`). */
+  origen: FacturacionOrigen = 'amadeus',
 ): FacturacionMesRow[] {
   const best = new Map<string, { fecha: string; total: number }>();
   for (const p of series) {

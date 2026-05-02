@@ -307,7 +307,7 @@ export function ExecutiveClient({
   const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
 
   const monthlyFact = useMemo(
-    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'combinada'),
+    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus'),
     [dailyKpisSeries, asOfDay],
   );
   const mesVsPair = useMemo(
@@ -444,10 +444,11 @@ export function ExecutiveClient({
       <div className="dashboard-panel mt-4 rounded-xl border border-border bg-background p-4">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold">Facturación acumulada por mes</div>
+            <div className="text-sm font-semibold">Facturación Amadeus (acumulada por mes)</div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Fact. día/mes Sadama + Amadeus: por mes se toma el <span className="font-medium">último corte</span> (MTD). El
-              YTD suma esos totales mensuales hasta el mes de corte. Corte de datos:{' '}
+              Solo <span className="font-medium">Amadeus</span> (fact. día/mes MTD): por mes
+              se usa el último corte (MTD). El YTD del gráfico suma esos meses de enero al mes de corte (como tu reporte
+              anual por mes). Sadama no se incluye aquí. Corte de datos:{' '}
               <span className="font-medium text-zinc-700 dark:text-zinc-300">
                 {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
               </span>
@@ -518,7 +519,7 @@ export function ExecutiveClient({
                       />
                       <Bar
                         dataKey="total"
-                        name="Facturación (MXN)"
+                        name="Fact. Amadeus (MXN)"
                         fill="var(--chart-line-flujo)"
                         radius={[4, 4, 0, 0]}
                       />
