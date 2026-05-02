@@ -210,6 +210,7 @@ export function ExecutiveClient({
   dailyKpisSeries,
   asOfDay,
   heroFacturacionYtd: heroFacturacionYtdServer,
+  uiBuildStamp,
 }: {
   meta: JsonMeta;
   view: ExecutiveViewModel;
@@ -223,6 +224,8 @@ export function ExecutiveClient({
     yearActual: string;
     yearAnterior: string;
   };
+  /** Mismo valor que en la cabecera (commit Vercel o `local` + hash de git). */
+  uiBuildStamp: string;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ExecutiveMode>('ytd');
@@ -372,8 +375,16 @@ export function ExecutiveClient({
   return (
     <div className="mx-auto max-w-6xl px-4 py-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          {mode === 'last_month' ? 'Último mes' : 'YTD'} · Cierre: {cierreLabel}
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <span>
+            {mode === 'last_month' ? 'Último mes' : 'YTD'} · Cierre: {cierreLabel}
+          </span>
+          <span
+            className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
+            title="Si no ves local y un hash de git, o un commit reciente en prod., esta pestaña puede estar sirviendo otra carpeta o caché."
+          >
+            · build {uiBuildStamp}
+          </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ExecutiveSwitch mode={mode} onChange={setMode} />
@@ -423,7 +434,7 @@ export function ExecutiveClient({
 
       <div className="grid gap-3 lg:grid-cols-3">
         <HeroFlujoBanner
-          title="Flujo total"
+          title={resumenYtdFacturacion ? 'Facturación Amadeus · YTD' : 'Flujo total'}
           yoyKpiKey="flujo_total"
           actual={flujoActualTotal}
           anterior={yoyFlujoTotal?.anterior ?? null}
@@ -433,6 +444,7 @@ export function ExecutiveClient({
           className="min-h-[140px]"
           facturacionYtd={resumenYtdFacturacion ?? undefined}
           hideFlujoYoyWhenNoFacturacion
+          heroHighlight={resumenYtdFacturacion ? 'facturacion_ytd' : 'flujo'}
         />
         <HeroFlujoBanner
           title="Flujo Sadama"

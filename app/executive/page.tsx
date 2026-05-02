@@ -74,9 +74,12 @@ export default async function ExecutivePage() {
             <div className="truncate bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-sm font-semibold text-transparent dark:from-sky-200 dark:via-white dark:to-sky-300">
               Dashboard Ejecutivo
             </div>
-            <div className="truncate text-xs text-zinc-500 dark:text-sky-200/70">
-              Cierre: {cierreLabel}
-              <span className="ml-2 font-mono text-[10px] text-zinc-400 dark:text-zinc-500" title="Commit del build (Vercel). Si no coincide con el último push, limpie caché o redeploy.">
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-xs text-zinc-500 dark:text-sky-200/70">
+              <span className="min-w-0">Cierre: {cierreLabel}</span>
+              <span
+                className="shrink-0 font-mono text-[10px] text-zinc-400 dark:text-zinc-500"
+                title="Commit del build (Vercel) o hash local (npm run dev). Si no coincide con el repo que edita, está sirviendo otra carpeta o caché."
+              >
                 · build {buildStamp}
               </span>
             </div>
@@ -97,6 +100,7 @@ export default async function ExecutivePage() {
         dailyKpisSeries={dailyKpisSeries}
         asOfDay={asOfDay}
         heroFacturacionYtd={heroFacturacionYtd ?? undefined}
+        uiBuildStamp={buildStamp}
       />
     </main>
   );
