@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "descripcion": "Monto neto mensual Sadama (reporte ERP: monto m.n. neto por mes). Sustituye el MTD derivado de capturas diarias solo para la serie de facturación Sadama en el ejecutivo.",
+    "moneda": "MXN",
+    "fuente": "ERP / usuario",
+    "nota": "2026-05 en 0 mientras el mes inicia; actualizar cuando exista el cierre oficial de mayo 2026."
+  },
+  "byMonth": {
+    "2025-01": 290008.62,
+    "2025-02": 292932.73,
+    "2025-03": 411987.7,
+    "2025-04": 256446.06,
+    "2025-05": 489638.3,
+    "2025-06": 220403.87,
+    "2025-07": 712621.15,
+    "2025-08": 479667.79,
+    "2025-09": 302907.26,
+    "2025-10": 374164.17,
+    "2025-11": 465612.18,
+    "2025-12": 583875.89,
+    "2026-01": 759893.64,
+    "2026-02": 480762.88,
+    "2026-03": 576228.22,
+    "2026-04": 1255860.44,
+    "2026-05": 0
+  }
+}

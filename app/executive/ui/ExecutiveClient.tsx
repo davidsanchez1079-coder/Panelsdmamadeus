@@ -17,7 +17,7 @@ import {
   type ChartRow,
 } from '@/lib/chartSeriesFilters';
 import { cxpProveedoresConPct } from '@/lib/cxpDonutFromDaily';
-import { applyAmadeusMontoNetoPorMes } from '@/lib/amadeusMontoNetoApply';
+import { applyAmadeusMontoNetoPorMes, applySadamaMontoNetoPorMes } from '@/lib/amadeusMontoNetoApply';
 import {
   aggregateFacturacionPorMesCalendario,
   mesActualVsMesAnteriorCalendario,
@@ -226,6 +226,7 @@ export function ExecutiveClient({
   asOfDay,
   uiBuildStamp,
   amadeusMontoNetoPorMes,
+  sadamaMontoNetoPorMes,
 }: {
   meta: JsonMeta;
   view: ExecutiveViewModel;
@@ -236,6 +237,8 @@ export function ExecutiveClient({
   uiBuildStamp: string;
   /** Monto neto mensual oficial Amadeus (`data/amadeus_monto_neto_mensual.json`). */
   amadeusMontoNetoPorMes?: Record<string, number> | null;
+  /** Monto neto mensual oficial Sadama (`data/sadama_monto_neto_mensual.json`). */
+  sadamaMontoNetoPorMes?: Record<string, number> | null;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ExecutiveMode>('ytd');
@@ -333,14 +336,29 @@ export function ExecutiveClient({
     const raw = aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus');
     return applyAmadeusMontoNetoPorMes(raw, amadeusMontoNetoPorMes ?? null, asOfDay);
   }, [dailyKpisSeries, asOfDay, amadeusMontoNetoPorMes]);
-  const monthlyFactSadama = useMemo(
-    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'sadama'),
-    [dailyKpisSeries, asOfDay],
-  );
-  const monthlyFactCombinada = useMemo(
-    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'combinada'),
-    [dailyKpisSeries, asOfDay],
-  );
+  const monthlyFactSadama = useMemo(() => {
+    const raw = aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'sadama');
+    return applySadamaMontoNetoPorMes(raw, sadamaMontoNetoPorMes ?? null, asOfDay);
+  }, [dailyKpisSeries, asOfDay, sadamaMontoNetoPorMes]);
+  const monthlyFactCombinada = useMemo(() => {
+    const byM = new Map<string, FacturacionMesRow>();
+    for (const r of monthlyFactSadama) {
+      byM.set(r.yyyymm, { ...r });
+    }
+    for (const r of monthlyFactAmadeus) {
+      const ex = byM.get(r.yyyymm);
+      if (ex) {
+        byM.set(r.yyyymm, {
+          yyyymm: r.yyyymm,
+          label: ex.label,
+          totalFacturacionMes: ex.totalFacturacionMes + r.totalFacturacionMes,
+        });
+      } else {
+        byM.set(r.yyyymm, { ...r });
+      }
+    }
+    return [...byM.values()].sort((a, b) => a.yyyymm.localeCompare(b.yyyymm));
+  }, [monthlyFactSadama, monthlyFactAmadeus]);
   const mesVsPair = useMemo(
     () => mesActualVsMesAnteriorCalendario(monthlyFactAmadeus, asOfDay),
     [monthlyFactAmadeus, asOfDay],
@@ -508,10 +526,11 @@ export function ExecutiveClient({
           <div>
             <div className="text-sm font-semibold">Facturación Amadeus (acumulada por mes)</div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Solo <span className="font-medium">Amadeus</span>. En captura diaria, <span className="font-medium">Fact. día / mes</span>{' '}
+              Solo <span className="font-medium">Amadeus</span> (gráfico). En captura diaria, <span className="font-medium">Fact. día / mes</span>{' '}
               es el MTD del mes en curso en cada fecha; aquí, por mes calendario, se toma el{' '}
-              <span className="font-medium">último registro de ese mes</span> (última fecha ≤ corte). Si hay montos netos mensuales
-              oficiales en datos, sustituyen solo a Amadeus en esta vista. El YTD suma ene → mes de corte. Sadama no se incluye.
+              <span className="font-medium">último registro de ese mes</span> (última fecha ≤ corte). Los montos netos mensuales
+              oficiales en <span className="font-medium">datos</span> sustituyen Amadeus y Sadama en las cifras YTD de los héroes y en el total combinado.
+              El YTD de este gráfico suma ene → mes de corte solo Amadeus.
               Corte:{' '}
               <span className="font-medium text-zinc-700 dark:text-zinc-300">
                 {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}

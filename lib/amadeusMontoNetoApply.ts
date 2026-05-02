@@ -3,7 +3,10 @@ import { es } from 'date-fns/locale';
 
 import type { FacturacionMesRow } from '@/lib/facturacionMonthly';
 
-export type AmadeusMontoNetoByMonth = Record<string, number>;
+/** Mapa `yyyy-mm` → monto neto mensual oficial (MXN). */
+export type MontoNetoMensualByMonth = Record<string, number>;
+/** @deprecated Use `MontoNetoMensualByMonth`. */
+export type AmadeusMontoNetoByMonth = MontoNetoMensualByMonth;
 
 function mesLabel(yyyymm: string): string {
   const d = parse(`${yyyymm}-01`, 'yyyy-MM-dd', new Date());
@@ -17,9 +20,9 @@ function mesHastaCorte(yyyymm: string, asOfDay: string): boolean {
 }
 
 /**
- * Sustituye (o inserta) totales mensuales de facturación Amadeus con montos netos oficiales por mes.
+ * Sustituye (o inserta) totales mensuales de facturación con montos netos oficiales por mes (misma lógica Sadama/Amadeus).
  */
-export function applyAmadeusMontoNetoPorMes(
+export function applyOfficialMontoNetoMensual(
   monthly: FacturacionMesRow[],
   byMonth: Record<string, number> | null | undefined,
   asOfDay: string,
@@ -45,3 +48,9 @@ export function applyAmadeusMontoNetoPorMes(
   }
   return [...map.values()].sort((a, b) => a.yyyymm.localeCompare(b.yyyymm));
 }
+
+/** Montos netos mensuales oficiales Amadeus (`data/amadeus_monto_neto_mensual.json`). */
+export const applyAmadeusMontoNetoPorMes = applyOfficialMontoNetoMensual;
+
+/** Montos netos mensuales oficiales Sadama (`data/sadama_monto_neto_mensual.json`). */
+export const applySadamaMontoNetoPorMes = applyOfficialMontoNetoMensual;
