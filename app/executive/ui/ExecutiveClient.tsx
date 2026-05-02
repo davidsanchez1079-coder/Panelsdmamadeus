@@ -220,7 +220,7 @@ export function ExecutiveClient({
   const [rangePreset, setRangePreset] = useState<ChartRangePreset>('year_natural');
   const [granularity, setGranularity] = useState<ChartGranularity>('auto');
   const [customRange, setCustomRange] = useState<ChartCustomDateRange>({ start: '', end: '' });
-  const [facturacionVista, setFacturacionVista] = useState<'mes_vs_mes' | 'ytd_anios'>('mes_vs_mes');
+  const [facturacionVista, setFacturacionVista] = useState<'mes_vs_mes' | 'ytd_anios'>('ytd_anios');
 
   const onRangePresetChange = (v: ChartRangePreset) => {
     setRangePreset(v);
@@ -335,6 +335,14 @@ export function ExecutiveClient({
     return { actual: String(y), anterior: String(y - 1) };
   }, [asOfDay]);
 
+  const ytdFactSnapshot = useMemo(() => {
+    const s = ytdFactSeries;
+    if (!s.length) return null;
+    return s[s.length - 1] ?? null;
+  }, [ytdFactSeries]);
+
+  const mesCorteNombre = useMemo(() => format(parseISO(asOfDay), 'MMMM', { locale: es }), [asOfDay]);
+
   const onExportPdf = () => {
     window.print();
   };
@@ -372,6 +380,28 @@ export function ExecutiveClient({
         </div>
       ) : null}
 
+      {ytdFactSnapshot ? (
+        <div className="mb-4 rounded-xl border border-emerald-200/90 bg-emerald-50/80 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-950/35">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900 dark:text-emerald-200/95">
+            Facturación Amadeus · YTD {ytdYears.actual} (ene → {mesCorteNombre})
+          </div>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <div className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 dark:text-white">
+              {formatMXN(ytdFactSnapshot.ytdAnioActual)}
+            </div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              Mismo lapso {ytdYears.anterior}:{' '}
+              <span className="font-medium tabular-nums text-zinc-800 dark:text-zinc-200">
+                {formatMXN(ytdFactSnapshot.ytdAnioAnterior)}
+              </span>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-500">
+            Suma de los totales mensuales (último MTD de cada mes). Detalle en el panel inferior.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 lg:grid-cols-3">
         <HeroFlujoBanner
           title="Flujo total"
@@ -382,6 +412,16 @@ export function ExecutiveClient({
           yoyDeltaPct={yoyFlujoTotal?.delta_pct ?? null}
           daily={dailyFlujo.total}
           className="min-h-[140px]"
+          facturacionYtd={
+            ytdFactSnapshot
+              ? {
+                  ytdActual: ytdFactSnapshot.ytdAnioActual,
+                  ytdAnterior: ytdFactSnapshot.ytdAnioAnterior,
+                  yearActual: ytdYears.actual,
+                  yearAnterior: ytdYears.anterior,
+                }
+              : undefined
+          }
         />
         <HeroFlujoBanner
           title="Flujo Sadama"
@@ -454,6 +494,15 @@ export function ExecutiveClient({
               </span>
               .
             </p>
+            {ytdFactSnapshot ? (
+              <p className="mt-2 text-sm tabular-nums text-zinc-800 dark:text-zinc-100">
+                YTD {ytdYears.actual}: <span className="font-semibold">{formatMXN(ytdFactSnapshot.ytdAnioActual)}</span>
+                {' · '}
+                <span className="font-normal text-zinc-500 dark:text-zinc-400">
+                  {ytdYears.anterior}: {formatMXN(ytdFactSnapshot.ytdAnioAnterior)}
+                </span>
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button

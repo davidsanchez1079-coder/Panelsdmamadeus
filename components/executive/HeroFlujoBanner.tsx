@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { FlujoDailyComparativo } from '@/lib/dailyFlujoComparativo';
 import { formatShortFecha } from '@/lib/dateDisplay';
 import { getDeltaDirection, getPolarity, getSemaforo } from '@/lib/executive';
@@ -32,6 +34,8 @@ export function HeroFlujoBanner({
   delta,
   daily,
   className,
+  yoyExplainFooter,
+  facturacionYtd,
 }: {
   title: string;
   yoyKpiKey: HeroFlujoYoyKey;
@@ -41,9 +45,27 @@ export function HeroFlujoBanner({
   yoyDeltaPct: number | null | undefined;
   daily: FlujoDailyComparativo | null;
   className?: string;
+  /** Texto bajo la fila YoY (p. ej. distinguir flujo vs facturación). */
+  yoyExplainFooter?: ReactNode;
+  /**
+   * Si viene definido, sustituye la fila YoY de **flujo** por el YTD de facturación Amadeus
+   * (suma de MTD mensuales ene → mes de corte), que es el dato alineado al reporte.
+   */
+  facturacionYtd?: {
+    ytdActual: number;
+    ytdAnterior: number;
+    yearActual: string;
+    yearAnterior: string;
+  };
 }) {
   const polarity = getPolarity(yoyKpiKey);
-  const sem = getSemaforo(yoyDeltaPct);
+  const facturacionDeltaPct =
+    facturacionYtd != null && Number.isFinite(facturacionYtd.ytdAnterior) && facturacionYtd.ytdAnterior !== 0
+      ? ((facturacionYtd.ytdActual - facturacionYtd.ytdAnterior) / facturacionYtd.ytdAnterior) * 100
+      : facturacionYtd != null && facturacionYtd.ytdAnterior === 0 && facturacionYtd.ytdActual !== 0
+        ? 100
+        : null;
+  const sem = facturacionYtd ? getSemaforo(facturacionDeltaPct) : getSemaforo(yoyDeltaPct);
   const semBar =
     sem === 'pos'
       ? 'border-l-emerald-500 dark:shadow-[0_0_32px_-6px_rgba(16,185,129,0.35)]'
@@ -76,6 +98,12 @@ export function HeroFlujoBanner({
         ? getDeltaDirection(polarity, vsMonthStartPct)
         : getDeltaDirection(polarity, vsMonthStartDelta > 0 ? 1 : -1);
   const yoyDeltaDir = getDeltaDirection(polarity, yoyDeltaPct);
+  const factPolarity = getPolarity('facturacion_amadeus_ytd');
+  const factDeltaMxn =
+    facturacionYtd != null && Number.isFinite(facturacionYtd.ytdActual) && Number.isFinite(facturacionYtd.ytdAnterior)
+      ? facturacionYtd.ytdActual - facturacionYtd.ytdAnterior
+      : null;
+  const factDeltaDir = getDeltaDirection(factPolarity, facturacionDeltaPct);
 
   return (
     <section
@@ -156,15 +184,57 @@ export function HeroFlujoBanner({
             </div>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-200/80 pt-3 text-sm text-zinc-700 dark:border-zinc-600/60 dark:text-zinc-300">
-            <span className="text-zinc-500 dark:text-zinc-500">YoY mismo mes</span>
-            <span className="tabular-nums text-zinc-900 dark:text-zinc-100">
-              {anterior == null ? '—' : formatMXN(anterior)}
-            </span>
-            <span className={cn('tabular-nums font-medium', delta == null ? 'text-zinc-900 dark:text-zinc-100' : deltaToneClass(yoyDeltaDir))}>
-              {delta == null ? '—' : formatMXN(delta)}
-            </span>
-            <YoYBadge kpiKey={yoyKpiKey} deltaPct={yoyDeltaPct} />
+          <div className="mt-3 border-t border-zinc-200/80 pt-3 text-sm text-zinc-700 dark:border-zinc-600/60 dark:text-zinc-300">
+            {facturacionYtd ? (
+              <div>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="text-zinc-500 dark:text-zinc-500">YTD fact. Amadeus ({facturacionYtd.yearActual})</span>
+                  <span className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-white">
+                    {formatMXN(facturacionYtd.ytdActual)}
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                  <span className="text-zinc-500 dark:text-zinc-400">
+                    vs mismo lapso {facturacionYtd.yearAnterior}
+                  </span>
+                  <span className="tabular-nums text-zinc-800 dark:text-zinc-100">
+                    {formatMXN(facturacionYtd.ytdAnterior)}
+                  </span>
+                  <span
+                    className={cn(
+                      'tabular-nums font-medium',
+                      factDeltaMxn == null ? 'text-zinc-900 dark:text-zinc-100' : deltaToneClass(factDeltaDir),
+                    )}
+                  >
+                    {factDeltaMxn == null ? '—' : formatMXN(factDeltaMxn)}
+                  </span>
+                  <YoYBadge
+                    kpiKey="facturacion_amadeus_ytd"
+                    deltaPct={facturacionDeltaPct}
+                    title="Variación YTD de facturación vs el mismo lapso del año anterior (ene → mes de corte)"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-zinc-500 dark:text-zinc-500">YoY · flujo (mismo mes cal.)</span>
+                  <span className="tabular-nums text-zinc-900 dark:text-zinc-100">
+                    {anterior == null ? '—' : formatMXN(anterior)}
+                  </span>
+                  <span
+                    className={cn(
+                      'tabular-nums font-medium',
+                      delta == null ? 'text-zinc-900 dark:text-zinc-100' : deltaToneClass(yoyDeltaDir),
+                    )}
+                  >
+                    {delta == null ? '—' : formatMXN(delta)}
+                  </span>
+                  <YoYBadge kpiKey={yoyKpiKey} deltaPct={yoyDeltaPct} />
+                </div>
+                {yoyExplainFooter ? <div className="mt-2">{yoyExplainFooter}</div> : null}
+              </>
+            )}
           </div>
         </div>
 
