@@ -480,18 +480,6 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
           </table>
         </div>
       </div>
-
-      <div className="rounded-xl border border-border bg-zinc-50/80 p-3 dark:border-white/[0.08] dark:bg-zinc-950/50">
-        <p className="mb-2 text-xs font-medium text-zinc-600 dark:text-zinc-400">Vista previa (esquema datos.rows)</p>
-        <pre className="max-h-80 overflow-auto rounded-md border border-zinc-200 bg-white p-3 text-[11px] leading-relaxed dark:border-zinc-800 dark:bg-zinc-950">
-          {json || '—'}
-        </pre>
-        <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-          Al guardar se actualizan <code className="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">data/sadama_amadeus_v1.json</code>{' '}
-          y el agregado mensual en <code className="rounded bg-zinc-200/80 px-1 dark:bg-zinc-800">data/sadama_amadeus_executive.json</code>.
-          El dashboard ejecutivo y los gráficos diarios usan esos archivos al recargar.
-        </p>
-      </div>
     </div>
   );
 }
