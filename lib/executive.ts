@@ -27,7 +27,7 @@ export interface MonthlyAggregate {
   cxp_sandvik?: number;
   cxp_vargus?: number;
   cxp_mexicana?: number;
-  cxp_probadores_amadeus?: number;
+  cxp_probadores_sadama?: number;
   cxp_otros?: number;
   bajio_usd_mxn?: number;
   bajio_mxn?: number;

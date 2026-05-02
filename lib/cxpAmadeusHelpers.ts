@@ -18,14 +18,16 @@ export function sumOtrosMontoFromCxp(cxp: Record<string, unknown> | undefined): 
   return num(cxp.otros);
 }
 
-export function probadoresAmadeusFromCxp(cxp: Record<string, unknown> | undefined): number {
+/** Monto línea Sadama en CXP Amadeus; lee `probadores_sadama` o legacy `probadores_amadeus`. */
+export function probadoresSadamaFromCxp(cxp: Record<string, unknown> | undefined): number {
   if (!cxp) return 0;
+  if (cxp.probadores_sadama !== undefined) return num(cxp.probadores_sadama);
   return num(cxp.probadores_amadeus);
 }
 
 /**
  * Total CXP Amadeus: si existe `total` explícito se respeta; si no, suma componentes
- * (incl. probadores_amadeus y suma de otros).
+ * (incl. línea Sadama en CXP Amadeus y suma de otros).
  */
 export function totalCxpAmadeusFromCxp(cxp: Record<string, unknown> | undefined): number {
   if (!cxp) return 0;
@@ -34,7 +36,7 @@ export function totalCxpAmadeusFromCxp(cxp: Record<string, unknown> | undefined)
     num(cxp.sandvik) +
     num(cxp.vargus) +
     num(cxp.mexicana) +
-    probadoresAmadeusFromCxp(cxp) +
+    probadoresSadamaFromCxp(cxp) +
     sumOtrosMontoFromCxp(cxp)
   );
 }

@@ -40,8 +40,8 @@ export interface DatosRow {
       sandvik: number;
       vargus: number;
       mexicana: number;
-      /** CXP línea Amadeus (probadores). */
-      probadores_amadeus?: number;
+      /** Línea Sadama dentro del bloque CXP capturado con Amadeus (probadores). */
+      probadores_sadama?: number;
       /** @deprecated Preferir `otros_lineas`; en datos antiguos era un solo monto. */
       otros?: number;
       /** Hasta 3 líneas; en reportes se suman los montos. */

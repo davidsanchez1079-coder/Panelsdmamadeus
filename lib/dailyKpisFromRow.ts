@@ -1,10 +1,6 @@
 import type { DatosRowMinimal } from './flujoFromRow';
 import { flujoBreakdownFromDatosRow, flujoTotalFromDatosRow } from './flujoFromRow';
-import {
-  probadoresAmadeusFromCxp,
-  sumOtrosMontoFromCxp,
-  totalCxpAmadeusFromCxp,
-} from './cxpAmadeusHelpers';
+import { probadoresSadamaFromCxp, sumOtrosMontoFromCxp, totalCxpAmadeusFromCxp } from './cxpAmadeusHelpers';
 
 function num(x: unknown): number {
   return typeof x === 'number' && Number.isFinite(x) ? x : 0;
@@ -16,6 +12,8 @@ export interface DailyKpiPoint {
   flujo_sadama: number;
   flujo_amadeus: number;
   bancos_total: number;
+  bancos_sadama: number;
+  bancos_amadeus: number;
   bajio_mxn: number;
   hsbc: number;
   bajio_usd_mxn: number;
@@ -23,14 +21,18 @@ export interface DailyKpiPoint {
   inventario_sadama: number;
   inventario_amadeus: number;
   cxc_total: number;
+  cxc_sadama: number;
+  cxc_amadeus: number;
   cxp_total: number;
   /** CXP consolidado Sadama (`sadama.cxp`). */
   cxp_sadama: number;
+  /** CXP lado Amadeus (proveedores + otros). */
+  cxp_amadeus: number;
   cxp_sandvik: number;
   cxp_vargus: number;
   cxp_mexicana: number;
-  /** CXP probadores — línea Amadeus (MXN). */
-  cxp_probadores_amadeus: number;
+  /** CXP — línea Sadama en bloque proveedores Amadeus (MXN). */
+  cxp_probadores_sadama: number;
   /** Suma de montos en «Otros» (líneas o legacy `otros`). */
   cxp_otros: number;
   /** Sadama + Amadeus: acumulado MTD del mes en la fecha de corte (no sumar días al cerrar mes). */
@@ -68,13 +70,13 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     sand = num(cxpA.sandvik);
     varg = num(cxpA.vargus);
     mex = num(cxpA.mexicana);
-    prob = probadoresAmadeusFromCxp(cxpA);
+    prob = probadoresSadamaFromCxp(cxpA);
     otr = sumOtrosMontoFromCxp(cxpA);
   } else if (cxpA) {
     sand = num(cxpA.sandvik);
     varg = num(cxpA.vargus);
     mex = num(cxpA.mexicana);
-    prob = probadoresAmadeusFromCxp(cxpA);
+    prob = probadoresSadamaFromCxp(cxpA);
     otr = sumOtrosMontoFromCxp(cxpA);
     totalCxpA = totalCxpAmadeusFromCxp(cxpA);
   }
@@ -114,6 +116,8 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     flujo_sadama,
     flujo_amadeus,
     bancos_total,
+    bancos_sadama: bancoS,
+    bancos_amadeus: totalBancosA,
     bajio_mxn: bajioMxn,
     hsbc,
     bajio_usd_mxn,
@@ -121,12 +125,15 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     inventario_sadama: invS,
     inventario_amadeus: invA,
     cxc_total: cxcS + cxcA,
+    cxc_sadama: cxcS,
+    cxc_amadeus: cxcA,
     cxp_total: cxpS + totalCxpA,
     cxp_sadama: cxpS,
+    cxp_amadeus: totalCxpA,
     cxp_sandvik: sand,
     cxp_vargus: varg,
     cxp_mexicana: mex,
-    cxp_probadores_amadeus: prob,
+    cxp_probadores_sadama: prob,
     cxp_otros: otr,
     facturacion_dia: factSadama + factAmadeus,
     facturacion_sadama_mes: factSadama,

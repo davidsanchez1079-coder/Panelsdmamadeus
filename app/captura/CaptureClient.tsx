@@ -108,7 +108,7 @@ const emptyAmadeus = {
   sandvik: '',
   vargus: '',
   mexicana: '',
-  probadores_amadeus: '',
+  probadores_sadama: '',
   otros_lineas: emptyOtrosLines(),
   bajio_usd: '',
   bajio_mxn: '',
@@ -360,10 +360,10 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               onChange={(v) => setAmadeus((p) => ({ ...p, mexicana: v }))}
             />
             <NumField
-              id="a-amadeus-cxp"
-              label="AMADEUS"
-              value={amadeus.probadores_amadeus}
-              onChange={(v) => setAmadeus((p) => ({ ...p, probadores_amadeus: v }))}
+              id="a-sadama-cxp-line"
+              label="Sadama"
+              value={amadeus.probadores_sadama}
+              onChange={(v) => setAmadeus((p) => ({ ...p, probadores_sadama: v }))}
             />
           </div>
           <p className="mb-2 mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">

@@ -81,7 +81,7 @@ function buildOne(curr: DatosRow, prev: DatosRow | null): Record<string, unknown
         sandvik: curr.amadeus.cxp.sandvik,
         vargus: curr.amadeus.cxp.vargus,
         mexicana: curr.amadeus.cxp.mexicana,
-        probadores_amadeus: curr.amadeus.cxp.probadores_amadeus ?? 0,
+        probadores_sadama: curr.amadeus.cxp.probadores_sadama ?? (curr.amadeus.cxp as { probadores_amadeus?: number }).probadores_amadeus ?? 0,
         otros: curr.amadeus.cxp.otros,
         otros_lineas: curr.amadeus.cxp.otros_lineas,
         total: cxpT,

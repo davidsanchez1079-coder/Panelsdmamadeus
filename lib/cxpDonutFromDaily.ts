@@ -7,7 +7,7 @@ export function cxpDonutFromDailyPoint(p: DailyKpiPoint | undefined | null) {
     { name: 'Sandvik', value: p.cxp_sandvik },
     { name: 'Vargus', value: p.cxp_vargus },
     { name: 'Mexicana', value: p.cxp_mexicana },
-    { name: 'AMADEUS', value: p.cxp_probadores_amadeus ?? 0 },
+    { name: 'Sadama (CXP Amadeus)', value: p.cxp_probadores_sadama ?? 0 },
     { name: 'Otros', value: p.cxp_otros },
   ];
   const sumParts = parts.reduce((a, b) => a + b.value, 0);

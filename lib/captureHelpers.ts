@@ -130,7 +130,7 @@ export function buildDatosRowFromCapture(input: {
     sandvik: string;
     vargus: string;
     mexicana: string;
-    probadores_amadeus: string;
+    probadores_sadama: string;
     otros_lineas: { monto: string; proveedor: string }[];
     bajio_usd: string;
     bajio_mxn: string;
@@ -156,7 +156,7 @@ export function buildDatosRowFromCapture(input: {
         sandvik: parseMoney(input.amadeus.sandvik),
         vargus: parseMoney(input.amadeus.vargus),
         mexicana: parseMoney(input.amadeus.mexicana),
-        probadores_amadeus: parseMoney(input.amadeus.probadores_amadeus),
+        probadores_sadama: parseMoney(input.amadeus.probadores_sadama),
         otros_lineas: input.amadeus.otros_lineas.map((line) => ({
           monto: parseMoney(line.monto),
           proveedor: typeof line.proveedor === 'string' ? line.proveedor.trim() : '',
@@ -192,7 +192,11 @@ export function captureStringsFromDatosRow(row: DatosRow) {
       sandvik: amountToInputString(row.amadeus.cxp.sandvik),
       vargus: amountToInputString(row.amadeus.cxp.vargus),
       mexicana: amountToInputString(row.amadeus.cxp.mexicana),
-      probadores_amadeus: amountToInputString(row.amadeus.cxp.probadores_amadeus ?? 0),
+      probadores_sadama: amountToInputString(
+        row.amadeus.cxp.probadores_sadama ??
+          (row.amadeus.cxp as { probadores_amadeus?: number }).probadores_amadeus ??
+          0,
+      ),
       otros_lineas: normalizeOtrosLinesFromRow(row),
       bajio_usd: amountToInputString(row.amadeus.bancos.bajio_usd),
       bajio_mxn: amountToInputString(row.amadeus.bancos.bajio_mxn),
