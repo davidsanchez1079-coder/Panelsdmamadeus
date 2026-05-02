@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { parse } from 'date-fns';
+import fs from 'fs/promises';
+import path from 'path';
 
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
 import { getExecutiveUiBuildStamp } from '@/lib/buildStamp';
@@ -14,11 +16,26 @@ import { loadPanelV1 } from '@/lib/panelV1';
 import type { DatosRow } from '@/lib/types';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
+async function loadAmadeusMontoNetoPorMesFromDisk(): Promise<Record<string, number> | null> {
+  try {
+    const filePath = path.join(process.cwd(), 'data', 'amadeus_monto_neto_mensual.json');
+    const raw = await fs.readFile(filePath, 'utf8');
+    const j = JSON.parse(raw) as { byMonth?: Record<string, number> };
+    return j.byMonth && typeof j.byMonth === 'object' ? j.byMonth : null;
+  } catch {
+    return null;
+  }
+}
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function ExecutivePage() {
-  const [data, v1] = await Promise.all([loadExecutive(), loadPanelV1()]);
+  const [data, v1, amadeusMontoNetoPorMes] = await Promise.all([
+    loadExecutive(),
+    loadPanelV1(),
+    loadAmadeusMontoNetoPorMesFromDisk(),
+  ]);
   const asOfDay = resolveExecutiveAsOfDay(v1.datos.rows);
   const asOf = parse(asOfDay, 'yyyy-MM-dd', new Date());
 
@@ -82,6 +99,7 @@ export default async function ExecutivePage() {
         dailyKpisSeries={dailyKpisSeries}
         asOfDay={asOfDay}
         uiBuildStamp={buildStamp}
+        amadeusMontoNetoPorMes={amadeusMontoNetoPorMes ?? undefined}
       />
     </main>
   );

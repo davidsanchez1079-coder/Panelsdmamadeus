@@ -17,6 +17,7 @@ import {
   type ChartRow,
 } from '@/lib/chartSeriesFilters';
 import { cxpProveedoresConPct } from '@/lib/cxpDonutFromDaily';
+import { applyAmadeusMontoNetoPorMes } from '@/lib/amadeusMontoNetoApply';
 import {
   aggregateFacturacionPorMesCalendario,
   mesActualVsMesAnteriorCalendario,
@@ -224,6 +225,7 @@ export function ExecutiveClient({
   dailyKpisSeries,
   asOfDay,
   uiBuildStamp,
+  amadeusMontoNetoPorMes,
 }: {
   meta: JsonMeta;
   view: ExecutiveViewModel;
@@ -232,6 +234,8 @@ export function ExecutiveClient({
   asOfDay: string;
   /** Mismo valor que en la cabecera (commit Vercel o `local` + hash de git). */
   uiBuildStamp: string;
+  /** Monto neto mensual oficial Amadeus (`data/amadeus_monto_neto_mensual.json`). */
+  amadeusMontoNetoPorMes?: Record<string, number> | null;
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ExecutiveMode>('ytd');
@@ -325,10 +329,10 @@ export function ExecutiveClient({
 
   const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
 
-  const monthlyFactAmadeus = useMemo(
-    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus'),
-    [dailyKpisSeries, asOfDay],
-  );
+  const monthlyFactAmadeus = useMemo(() => {
+    const raw = aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus');
+    return applyAmadeusMontoNetoPorMes(raw, amadeusMontoNetoPorMes ?? null, asOfDay);
+  }, [dailyKpisSeries, asOfDay, amadeusMontoNetoPorMes]);
   const monthlyFactSadama = useMemo(
     () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'sadama'),
     [dailyKpisSeries, asOfDay],
