@@ -18,8 +18,15 @@ import {
 } from '@/lib/chartSeriesFilters';
 import { cxpProveedoresConPct } from '@/lib/cxpDonutFromDaily';
 import {
+  aggregateFacturacionPorMesCalendario,
+  mesActualVsMesAnteriorCalendario,
+  ytdComparativaAnioVsAnioAnterior,
+} from '@/lib/facturacionMonthly';
+import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   Brush,
   CartesianGrid,
   Legend,
@@ -213,6 +220,7 @@ export function ExecutiveClient({
   const [rangePreset, setRangePreset] = useState<ChartRangePreset>('year_natural');
   const [granularity, setGranularity] = useState<ChartGranularity>('auto');
   const [customRange, setCustomRange] = useState<ChartCustomDateRange>({ start: '', end: '' });
+  const [facturacionVista, setFacturacionVista] = useState<'mes_vs_mes' | 'ytd_anios'>('mes_vs_mes');
 
   const onRangePresetChange = (v: ChartRangePreset) => {
     setRangePreset(v);
@@ -298,6 +306,35 @@ export function ExecutiveClient({
 
   const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
 
+  const monthlyFact = useMemo(
+    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay),
+    [dailyKpisSeries, asOfDay],
+  );
+  const mesVsPair = useMemo(
+    () => mesActualVsMesAnteriorCalendario(monthlyFact, asOfDay),
+    [monthlyFact, asOfDay],
+  );
+  const mesVsBarData = useMemo(() => {
+    const { anterior, actual } = mesVsPair;
+    const rows: { periodo: string; total: number }[] = [];
+    if (anterior) rows.push({ periodo: anterior.label, total: anterior.totalFacturacionMes });
+    if (actual) rows.push({ periodo: actual.label, total: actual.totalFacturacionMes });
+    return rows;
+  }, [mesVsPair]);
+  const mesVsDeltaPct = useMemo(() => {
+    const { anterior, actual } = mesVsPair;
+    if (!anterior || !actual || anterior.totalFacturacionMes === 0) return null;
+    return ((actual.totalFacturacionMes - anterior.totalFacturacionMes) / anterior.totalFacturacionMes) * 100;
+  }, [mesVsPair]);
+  const ytdFactSeries = useMemo(
+    () => ytdComparativaAnioVsAnioAnterior(monthlyFact, asOfDay),
+    [monthlyFact, asOfDay],
+  );
+  const ytdYears = useMemo(() => {
+    const y = parseISO(asOfDay).getFullYear();
+    return { actual: String(y), anterior: String(y - 1) };
+  }, [asOfDay]);
+
   const onExportPdf = () => {
     window.print();
   };
@@ -314,6 +351,9 @@ export function ExecutiveClient({
         <div className="flex flex-wrap items-center gap-2">
           <ExecutiveSwitch mode={mode} onChange={setMode} />
           <ThemeToggle />
+          <Button variant="outline" size="sm" onClick={() => router.refresh()} title="Recargar datos desde el servidor">
+            Actualizar
+          </Button>
           <Button variant="outline" size="sm" onClick={onExportPdf} title="Exportar pantalla a PDF">
             PDF
           </Button>
@@ -399,6 +439,154 @@ export function ExecutiveClient({
             />
           );
         })}
+      </div>
+
+      <div className="dashboard-panel mt-4 rounded-xl border border-border bg-background p-4">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">Facturación diaria acumulada por mes</div>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Suma por mes calendario de Fact. día/mes (Sadama + Amadeus). Corte de datos:{' '}
+              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
+              </span>
+              .
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={facturacionVista === 'mes_vs_mes' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFacturacionVista('mes_vs_mes')}
+            >
+              Mes vs mes anterior
+            </Button>
+            <Button
+              type="button"
+              variant={facturacionVista === 'ytd_anios' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFacturacionVista('ytd_anios')}
+            >
+              YTD año vs año anterior
+            </Button>
+          </div>
+        </div>
+
+        {facturacionVista === 'mes_vs_mes' ? (
+          mesVsBarData.length === 0 ? (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin datos de facturación en la serie diaria.</p>
+          ) : (
+            <>
+              {mesVsDeltaPct != null ? (
+                <p className="mb-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  Variación mes actual vs anterior:{' '}
+                  <span className="font-semibold tabular-nums">{formatPct(mesVsDeltaPct)}</span>
+                </p>
+              ) : null}
+              <div className="chart-root h-[220px] w-full text-foreground">
+                {mounted ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mesVsBarData} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                      <XAxis
+                        dataKey="periodo"
+                        tick={axisTick}
+                        interval={0}
+                        angle={-22}
+                        textAnchor="end"
+                        height={58}
+                      />
+                      <YAxis
+                        width={56}
+                        tick={axisTick}
+                        tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'var(--chart-brush-area)' }}
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const row = payload[0].payload as { periodo: string; total: number };
+                          return (
+                            <TooltipShell>
+                              <div className="text-sm font-semibold">{row.periodo}</div>
+                              <div className="mt-1 text-sm tabular-nums">{formatMXN(row.total)}</div>
+                            </TooltipShell>
+                          );
+                        }}
+                      />
+                      <Bar
+                        dataKey="total"
+                        name="Facturación (MXN)"
+                        fill="var(--chart-line-flujo)"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : null}
+              </div>
+            </>
+          )
+        ) : ytdFactSeries.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin datos para YTD en el año en curso.</p>
+        ) : (
+          <div className="chart-root h-[260px] w-full text-foreground">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={ytdFactSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                  <XAxis dataKey="label" tick={axisTick} />
+                  <YAxis
+                    width={56}
+                    tick={axisTick}
+                    tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0]?.payload as
+                        | { label: string; ytdAnioActual: number; ytdAnioAnterior: number }
+                        | undefined;
+                      if (!row) return null;
+                      return (
+                        <TooltipShell>
+                          <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Mes {row.label}</div>
+                          <ul className="mt-2 space-y-1 text-xs">
+                            <li className="flex justify-between gap-4 tabular-nums">
+                              <span>YTD {ytdYears.actual}</span>
+                              <span>{formatMXN(row.ytdAnioActual)}</span>
+                            </li>
+                            <li className="flex justify-between gap-4 tabular-nums">
+                              <span>YTD {ytdYears.anterior}</span>
+                              <span>{formatMXN(row.ytdAnioAnterior)}</span>
+                            </li>
+                          </ul>
+                        </TooltipShell>
+                      );
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Line
+                    type="monotone"
+                    dataKey="ytdAnioActual"
+                    name={`Acumulado ${ytdYears.actual}`}
+                    stroke="var(--chart-line-flujo)"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="ytdAnioAnterior"
+                    name={`Acumulado ${ytdYears.anterior}`}
+                    stroke="var(--chart-line-flujo-amadeus)"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">

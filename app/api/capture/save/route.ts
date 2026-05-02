@@ -1,3 +1,4 @@
+import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 import { analyzeCaptureSave } from '@/lib/captureSaveAnalysis';
@@ -14,6 +15,8 @@ export async function POST(req: Request) {
     const removeFecha = typeof body?.removeFecha === 'string' ? body.removeFecha : undefined;
     const merged = await persistDatosRow(row, removeFecha);
     const analysis = analyzeCaptureSave(row, merged);
+    revalidatePath('/executive');
+    revalidatePath('/captura');
     return NextResponse.json({ ok: true, analysis });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

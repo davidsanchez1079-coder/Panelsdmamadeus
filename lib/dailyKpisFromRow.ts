@@ -23,6 +23,8 @@ export interface DailyKpiPoint {
   cxp_vargus: number;
   cxp_mexicana: number;
   cxp_otros: number;
+  /** Fact. día/mes Sadama + Amadeus (MXN del día; se suma por mes calendario). */
+  facturacion_dia: number;
 }
 
 export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | null {
@@ -83,6 +85,8 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
   const cxcS = num(s.cxc);
   const cxcA = num(a.cxc);
   const cxpS = num(s.cxp);
+  const factSadama = num(s.fact_dia_mes);
+  const factAmadeus = num(a.fact_dia_mes);
 
   const bancos_total = totalBancosA + bancoS;
   const bajio_usd_mxn = bajioUsd * tc;
@@ -105,5 +109,6 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     cxp_vargus: varg,
     cxp_mexicana: mex,
     cxp_otros: otr,
+    facturacion_dia: factSadama + factAmadeus,
   };
 }
