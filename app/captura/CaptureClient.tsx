@@ -369,6 +369,14 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
         </section>
       </div>
 
+      <p className="rounded-lg border border-zinc-200/80 bg-zinc-50/90 px-3 py-2 text-[11px] leading-snug text-zinc-600 dark:border-zinc-600/60 dark:bg-zinc-900/45 dark:text-zinc-400">
+        <span className="font-medium text-zinc-800 dark:text-zinc-300">Fact. día mes (Sadama) y Fact. día / mes (Amadeus):</span>{' '}
+        son la facturación <span className="font-medium">acumulada del mes en curso</span> (MTD) a la fecha de este registro. En el
+        dashboard ejecutivo, los comparativos de facturación usan, para cada mes calendario, el valor del{' '}
+        <span className="font-medium">último registro guardado en ese mes</span> (última fecha con datos hasta el corte), no la suma
+        de todos los días del mes.
+      </p>
+
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={onGuardar} disabled={!json || saving}>
           {saving ? 'Guardando…' : 'Guardar en datos'}

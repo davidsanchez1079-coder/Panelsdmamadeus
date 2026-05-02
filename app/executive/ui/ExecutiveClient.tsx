@@ -508,9 +508,11 @@ export function ExecutiveClient({
           <div>
             <div className="text-sm font-semibold">Facturación Amadeus (acumulada por mes)</div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Solo <span className="font-medium">Amadeus</span> (fact. día/mes MTD): por mes
-              se usa el último corte (MTD). El YTD del gráfico suma esos meses de enero al mes de corte (como tu reporte
-              anual por mes). Sadama no se incluye aquí. Corte de datos:{' '}
+              Solo <span className="font-medium">Amadeus</span>. En captura diaria, <span className="font-medium">Fact. día / mes</span>{' '}
+              es el MTD del mes en curso en cada fecha; aquí, por mes calendario, se toma el{' '}
+              <span className="font-medium">último registro de ese mes</span> (última fecha ≤ corte). Si hay montos netos mensuales
+              oficiales en datos, sustituyen solo a Amadeus en esta vista. El YTD suma ene → mes de corte. Sadama no se incluye.
+              Corte:{' '}
               <span className="font-medium text-zinc-700 dark:text-zinc-300">
                 {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
               </span>

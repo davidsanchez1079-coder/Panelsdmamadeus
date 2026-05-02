@@ -43,7 +43,8 @@ function formatMesLabel(yyyymm: string): string {
 /**
  * Monto “cerrado” por mes calendario (YYYY-MM) hasta `asOfDay` inclusive; orden cronológico.
  * En cada día el MTD (`fact_dia_mes` según `origen`) es acumulado del mes: **no** se suman filas del mismo mes.
- * Para cada mes se usa el **último** registro (fecha máxima ≤ asOfDay) como total de ese mes.
+ * Para cada mes se usa el **último** registro (fecha máxima ≤ asOfDay) como total de ese mes — coherente con captura
+ * «Fact. día / mes» (MTD) y con el criterio de comparativo mensual.
  */
 export function aggregateFacturacionPorMesCalendario(
   series: DailyKpiPoint[],
