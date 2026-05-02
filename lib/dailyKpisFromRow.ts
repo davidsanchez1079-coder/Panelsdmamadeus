@@ -23,8 +23,12 @@ export interface DailyKpiPoint {
   cxp_vargus: number;
   cxp_mexicana: number;
   cxp_otros: number;
-  /** Sadama + Amadeus: acumulado de facturación del mes a la fecha de corte (MTD; no sumar días al agregar por mes). */
+  /** Sadama + Amadeus: acumulado MTD del mes en la fecha de corte (no sumar días al cerrar mes). */
   facturacion_dia: number;
+  /** Sadama `fact_dia_mes`: acumulado mensual MTD en la fecha de corte. */
+  facturacion_sadama_mes: number;
+  /** Amadeus `fact_dia_mes`: acumulado mensual MTD en la fecha de corte (serie tipo reporte Amadeus). */
+  facturacion_amadeus_mes: number;
 }
 
 export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | null {
@@ -110,5 +114,7 @@ export function dailyKpisFromDatosRow(row: DatosRowMinimal): DailyKpiPoint | nul
     cxp_mexicana: mex,
     cxp_otros: otr,
     facturacion_dia: factSadama + factAmadeus,
+    facturacion_sadama_mes: factSadama,
+    facturacion_amadeus_mes: factAmadeus,
   };
 }

@@ -3,6 +3,21 @@ import { es } from 'date-fns/locale';
 
 import type { DailyKpiPoint } from '@/lib/dailyKpisFromRow';
 
+/** Qué campo MTD usar al cerrar cada mes (última fecha del mes en la serie). */
+export type FacturacionOrigen = 'amadeus' | 'sadama' | 'combinada';
+
+function pickFacturacionMtd(p: DailyKpiPoint, origen: FacturacionOrigen): number {
+  switch (origen) {
+    case 'amadeus':
+      return p.facturacion_amadeus_mes ?? 0;
+    case 'sadama':
+      return p.facturacion_sadama_mes ?? 0;
+    case 'combinada':
+    default:
+      return p.facturacion_dia ?? 0;
+  }
+}
+
 export type FacturacionMesRow = {
   yyyymm: string;
   label: string;
@@ -18,19 +33,20 @@ function formatMesLabel(yyyymm: string): string {
 }
 
 /**
- * Totales por mes calendario (YYYY-MM) hasta `asOfDay` inclusive; orden cronológico.
- * `facturacion_dia` es acumulado mensual (MTD) en cada corte: no se suman los días;
- * para cada mes se toma el valor del **último** registro (fecha más reciente en ese mes).
+ * Monto “cerrado” por mes calendario (YYYY-MM) hasta `asOfDay` inclusive; orden cronológico.
+ * En cada día el MTD (`fact_dia_mes` según `origen`) es acumulado del mes: **no** se suman filas del mismo mes.
+ * Para cada mes se usa el **último** registro (fecha máxima ≤ asOfDay) como total de ese mes.
  */
 export function aggregateFacturacionPorMesCalendario(
   series: DailyKpiPoint[],
   asOfDay: string,
+  origen: FacturacionOrigen = 'combinada',
 ): FacturacionMesRow[] {
   const best = new Map<string, { fecha: string; total: number }>();
   for (const p of series) {
     if (p.fecha > asOfDay) continue;
     const key = p.fecha.slice(0, 7);
-    const total = p.facturacion_dia ?? 0;
+    const total = pickFacturacionMtd(p, origen);
     const prev = best.get(key);
     if (!prev || p.fecha >= prev.fecha) {
       best.set(key, { fecha: p.fecha, total });
@@ -64,7 +80,10 @@ export function mesActualVsMesAnteriorCalendario(
   return { anterior, actual };
 }
 
-/** YTD acumulado por mes: año en curso vs mismo acumulado del año pasado (hasta el mes de corte de asOf). */
+/**
+ * YTD por mes: en cada punto de ene…mes de corte, suma los **totales mensuales** ya cerrados
+ * (último dato de cada mes), no suma días sueltos. Compara año en curso vs año anterior.
+ */
 export function ytdComparativaAnioVsAnioAnterior(
   monthly: FacturacionMesRow[],
   asOfDay: string,
