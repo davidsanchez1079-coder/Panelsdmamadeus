@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-05-02T00:53:17.310Z",
+    "generated": "2026-05-02T00:58:53.523Z",
     "source": "TOTAL RAPIDO 252.xlsx",
     "sheets": [
       "DATOS SADAMA AMADEUS",
@@ -4330,14 +4330,14 @@
         "fecha": "2026-05-01",
         "sadama": {
           "banco": 32275.26,
-          "inventarios": 0,
-          "cxc": 0,
-          "cxp": 0,
+          "inventarios": 629649.12,
+          "cxc": 1591679.24,
+          "cxp": 685521.92,
           "fact_dia_mes": 0
         },
         "amadeus": {
-          "inventarios": 0,
-          "cxc": 0,
+          "inventarios": 6678653.59,
+          "cxc": 7736948.9,
           "fact_dia_mes": 0,
           "compras_mes": 0,
           "cxp": {
@@ -11118,15 +11118,15 @@
         "_row": 159,
         "fecha": "2026-05-01",
         "sadama": {
-          "cxc": 0,
-          "cxp": 0,
+          "cxc": 1591679.24,
+          "cxp": 685521.92,
           "banco": 32275.26,
-          "inventarios": 0,
+          "inventarios": 629649.12,
           "fact_dia_mes": 0
         },
         "amadeus": {
-          "cxc": 0,
-          "dif_cxc": -7736948.9,
+          "cxc": 7736948.9,
+          "dif_cxc": 0,
           "fact_dia_mes": 0,
           "dif_ventas": -5139502.31,
           "cxp": {
@@ -11145,23 +11145,23 @@
             "hsbc": 190474,
             "total_mxn": 550710.8200000001
           },
-          "inventarios": 0,
-          "dif_inventarios": -6678653.59
+          "inventarios": 6678653.59,
+          "dif_inventarios": 0
         },
         "tc": 17.46,
         "flujos": {
-          "amadeus": -5152711.58,
-          "dif_amadeus": -7704473.21,
-          "sadama": 32275.26,
-          "dif_sadama": -906157.32,
-          "total": -5120436.32,
-          "dif_total": -8610630.530000001
+          "amadeus": 2584237.3200000003,
+          "dif_amadeus": 32475.69000000041,
+          "sadama": 938432.58,
+          "dif_sadama": 0,
+          "total": 3522669.9000000004,
+          "dif_total": 32475.69000000041
         },
         "totales": {
           "bancos": 582986.0800000001,
           "dif_bancos": 1060.0200000000186,
-          "inventario": 0,
-          "dif_inventario": -7308302.71
+          "inventario": 7308302.71,
+          "dif_inventario": 0
         }
       }
     ]
