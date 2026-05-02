@@ -14,6 +14,7 @@ import type { DatosRow } from '@/lib/types';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function ExecutivePage() {
   const [data, v1] = await Promise.all([loadExecutive(), loadPanelV1()]);

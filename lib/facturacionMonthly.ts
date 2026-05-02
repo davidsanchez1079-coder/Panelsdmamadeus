@@ -1,4 +1,4 @@
-import { format, parse, parseISO, subMonths } from 'date-fns';
+import { format, isValid, parse, parseISO, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import type { DailyKpiPoint } from '@/lib/dailyKpisFromRow';
@@ -25,6 +25,14 @@ export type FacturacionMesRow = {
 };
 
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+/** `parseISO` a veces falla con strings locales; se refuerza con `parse` ISO. */
+function parseAsOfDay(asOfDay: string): Date {
+  const a = parseISO(asOfDay);
+  if (isValid(a)) return a;
+  const b = parse(asOfDay, 'yyyy-MM-dd', new Date());
+  return b;
+}
 
 function formatMesLabel(yyyymm: string): string {
   const d = parse(`${yyyymm}-01`, 'yyyy-MM-dd', new Date());
@@ -69,8 +77,8 @@ export function mesActualVsMesAnteriorCalendario(
   monthly: FacturacionMesRow[],
   asOfDay: string,
 ): { anterior: FacturacionMesRow | null; actual: FacturacionMesRow | null } {
-  const asOf = parseISO(asOfDay);
-  if (Number.isNaN(asOf.getTime())) return { anterior: null, actual: null };
+  const asOf = parseAsOfDay(asOfDay);
+  if (!isValid(asOf)) return { anterior: null, actual: null };
   const cy = asOf.getFullYear();
   const cm = asOf.getMonth();
   const actualKey = `${cy}-${String(cm + 1).padStart(2, '0')}`;
@@ -89,7 +97,8 @@ export function ytdComparativaAnioVsAnioAnterior(
   monthly: FacturacionMesRow[],
   asOfDay: string,
 ): { label: string; ytdAnioActual: number; ytdAnioAnterior: number }[] {
-  const asOf = parseISO(asOfDay);
+  const asOf = parseAsOfDay(asOfDay);
+  if (!isValid(asOf)) return [];
   const yAct = asOf.getFullYear();
   const mMax = asOf.getMonth();
   const yAnt = yAct - 1;
@@ -111,4 +120,32 @@ export function ytdComparativaAnioVsAnioAnterior(
     });
   }
   return out;
+}
+
+/** Totales YTD facturación (ene → mes de `asOfDay`) para año en curso vs mismo lapso año anterior; una sola fuente para hero y cintillos. */
+export function ytdFacturacionResumen(
+  monthly: FacturacionMesRow[],
+  asOfDay: string,
+): { ytdActual: number; ytdAnterior: number; yearActual: string; yearAnterior: string } | null {
+  const asOf = parseAsOfDay(asOfDay);
+  if (!isValid(asOf)) return null;
+  const yAct = asOf.getFullYear();
+  const mMax = asOf.getMonth();
+  if (!Number.isFinite(mMax) || mMax < 0 || mMax > 11) return null;
+  const yAnt = yAct - 1;
+  let cumA = 0;
+  let cumB = 0;
+  for (let m = 0; m <= mMax; m++) {
+    const mm = String(m + 1).padStart(2, '0');
+    const yyyymmA = `${yAct}-${mm}`;
+    const yyyymmB = `${yAnt}-${mm}`;
+    cumA += monthly.find((r) => r.yyyymm === yyyymmA)?.totalFacturacionMes ?? 0;
+    cumB += monthly.find((r) => r.yyyymm === yyyymmB)?.totalFacturacionMes ?? 0;
+  }
+  return {
+    ytdActual: cumA,
+    ytdAnterior: cumB,
+    yearActual: String(yAct),
+    yearAnterior: String(yAnt),
+  };
 }
