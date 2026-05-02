@@ -2,7 +2,8 @@
   "meta": {
     "descripcion": "Monto neto mensual Amadeus (reporte oficial). Sustituye el MTD derivado de capturas diarias solo para la serie de facturación Amadeus.",
     "moneda": "MXN",
-    "fuente": "usuario / ERP"
+    "fuente": "usuario / ERP",
+    "nota": "2026-05 en 0 mientras el mes inicia; actualizar cuando exista el monto neto de mayo 2026. Ene–may 2025 refleja el cierre oficial (~31,9M MXN)."
   },
   "byMonth": {
     "2025-01": 6181140.13,
