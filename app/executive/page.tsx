@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { isValid, parse } from 'date-fns';
+import { parse } from 'date-fns';
 
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
 import { getExecutiveUiBuildStamp } from '@/lib/buildStamp';
@@ -12,11 +12,6 @@ import { loadExecutive } from '@/lib/loadExecutive';
 import { rebuildExecutiveFromDatosRows } from '@/lib/rebuildExecutiveFromDatos';
 import { loadPanelV1 } from '@/lib/panelV1';
 import type { DatosRow } from '@/lib/types';
-import {
-  aggregateFacturacionPorMesCalendario,
-  parseAsOfDay,
-  ytdFacturacionResumen,
-} from '@/lib/facturacionMonthly';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
 export const dynamic = 'force-dynamic';
@@ -49,19 +44,6 @@ export default async function ExecutivePage() {
   const view = getExecutiveViewModel(dataForView, asOf);
   const dailyFlujo = buildFlujoDailyComparativoBundle(v1.datos.rows, asOf);
   const dailyKpisSeries = buildDailyKpisSeries(v1.datos.rows, asOfDay);
-  const monthlyFactHero = aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus');
-  let heroFacturacionYtd = ytdFacturacionResumen(monthlyFactHero, asOfDay);
-  if (!heroFacturacionYtd) {
-    const d = parseAsOfDay(asOfDay);
-    if (isValid(d)) {
-      heroFacturacionYtd = {
-        ytdActual: 0,
-        ytdAnterior: 0,
-        yearActual: String(d.getFullYear()),
-        yearAnterior: String(d.getFullYear() - 1),
-      };
-    }
-  }
   const buildStamp = getExecutiveUiBuildStamp();
   const cierre = view.lastMonth.fecha_cierre;
   const cierreLabel = formatCierreLabel(cierre, view.lastMonth.yyyymm);
@@ -99,7 +81,6 @@ export default async function ExecutivePage() {
         dailyFlujo={dailyFlujo}
         dailyKpisSeries={dailyKpisSeries}
         asOfDay={asOfDay}
-        heroFacturacionYtd={heroFacturacionYtd ?? undefined}
         uiBuildStamp={buildStamp}
       />
     </main>

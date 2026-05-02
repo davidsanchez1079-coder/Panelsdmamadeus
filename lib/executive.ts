@@ -222,7 +222,13 @@ export function getExecutiveViewModel(data: ExecutiveData, asOf: Date = new Date
 export function getPolarity(kpiKey: string): Polarity {
   if (kpiKey === 'tc') return 'neutral';
   if (kpiKey.startsWith('cxp')) return 'negative';
-  if (kpiKey === 'facturacion_amadeus_ytd') return 'positive';
+  if (
+    kpiKey === 'facturacion_amadeus_ytd' ||
+    kpiKey === 'facturacion_sadama_ytd' ||
+    kpiKey === 'facturacion_total_ytd'
+  ) {
+    return 'positive';
+  }
   if (kpiKey.startsWith('flujo')) return 'positive';
   if (kpiKey.includes('bancos')) return 'positive';
   /* Menos inventario suele ser mejor (capital, obsolescencia); ↑% YoY → malo (rojo). */

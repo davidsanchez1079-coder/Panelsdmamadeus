@@ -21,6 +21,7 @@ import {
   aggregateFacturacionPorMesCalendario,
   mesActualVsMesAnteriorCalendario,
   parseAsOfDay,
+  type FacturacionMesRow,
   ytdComparativaAnioVsAnioAnterior,
   ytdFacturacionResumen,
 } from '@/lib/facturacionMonthly';
@@ -203,13 +204,25 @@ function BancosTooltip({ active, payload }: ChartTooltipProps) {
   );
 }
 
+function resumenFactYtdWithFallback(monthly: FacturacionMesRow[], asOfDay: string) {
+  const r = ytdFacturacionResumen(monthly, asOfDay);
+  if (r) return r;
+  const d = parseAsOfDay(asOfDay);
+  if (!isValid(d)) return null;
+  return {
+    ytdActual: 0,
+    ytdAnterior: 0,
+    yearActual: String(d.getFullYear()),
+    yearAnterior: String(d.getFullYear() - 1),
+  };
+}
+
 export function ExecutiveClient({
   meta,
   view,
   dailyFlujo,
   dailyKpisSeries,
   asOfDay,
-  heroFacturacionYtd: heroFacturacionYtdServer,
   uiBuildStamp,
 }: {
   meta: JsonMeta;
@@ -217,13 +230,6 @@ export function ExecutiveClient({
   dailyFlujo: FlujoDailyComparativoBundle;
   dailyKpisSeries: DailyKpiPoint[];
   asOfDay: string;
-  /** Precomputado en el servidor (misma lógica que los gráficos de facturación). */
-  heroFacturacionYtd?: {
-    ytdActual: number;
-    ytdAnterior: number;
-    yearActual: string;
-    yearAnterior: string;
-  };
   /** Mismo valor que en la cabecera (commit Vercel o `local` + hash de git). */
   uiBuildStamp: string;
 }) {
@@ -319,13 +325,21 @@ export function ExecutiveClient({
 
   const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
 
-  const monthlyFact = useMemo(
+  const monthlyFactAmadeus = useMemo(
     () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus'),
     [dailyKpisSeries, asOfDay],
   );
+  const monthlyFactSadama = useMemo(
+    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'sadama'),
+    [dailyKpisSeries, asOfDay],
+  );
+  const monthlyFactCombinada = useMemo(
+    () => aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'combinada'),
+    [dailyKpisSeries, asOfDay],
+  );
   const mesVsPair = useMemo(
-    () => mesActualVsMesAnteriorCalendario(monthlyFact, asOfDay),
-    [monthlyFact, asOfDay],
+    () => mesActualVsMesAnteriorCalendario(monthlyFactAmadeus, asOfDay),
+    [monthlyFactAmadeus, asOfDay],
   );
   const mesVsBarData = useMemo(() => {
     const { anterior, actual } = mesVsPair;
@@ -340,30 +354,26 @@ export function ExecutiveClient({
     return ((actual.totalFacturacionMes - anterior.totalFacturacionMes) / anterior.totalFacturacionMes) * 100;
   }, [mesVsPair]);
   const ytdFactSeries = useMemo(
-    () => ytdComparativaAnioVsAnioAnterior(monthlyFact, asOfDay),
-    [monthlyFact, asOfDay],
+    () => ytdComparativaAnioVsAnioAnterior(monthlyFactAmadeus, asOfDay),
+    [monthlyFactAmadeus, asOfDay],
   );
   const ytdYears = useMemo(() => {
     const y = parseISO(asOfDay).getFullYear();
     return { actual: String(y), anterior: String(y - 1) };
   }, [asOfDay]);
 
-  /** Misma lógica que el gráfico YTD; prioriza valor del servidor; si la fecha es válida, siempre hay resumen (evita fallback al YoY de flujo ~55M). */
-  const resumenYtdFacturacion = useMemo(() => {
-    if (heroFacturacionYtdServer != null) return heroFacturacionYtdServer;
-    const r = ytdFacturacionResumen(monthlyFact, asOfDay);
-    if (r) return r;
-    const d = parseAsOfDay(asOfDay);
-    if (!isValid(d)) return null;
-    return {
-      ytdActual: 0,
-      ytdAnterior: 0,
-      yearActual: String(d.getFullYear()),
-      yearAnterior: String(d.getFullYear() - 1),
-    };
-  }, [heroFacturacionYtdServer, monthlyFact, asOfDay]);
-
-  const mesCorteNombre = useMemo(() => format(parseISO(asOfDay), 'MMMM', { locale: es }), [asOfDay]);
+  const resumenFactTotal = useMemo(
+    () => resumenFactYtdWithFallback(monthlyFactCombinada, asOfDay),
+    [monthlyFactCombinada, asOfDay],
+  );
+  const resumenFactSadama = useMemo(
+    () => resumenFactYtdWithFallback(monthlyFactSadama, asOfDay),
+    [monthlyFactSadama, asOfDay],
+  );
+  const resumenFactAmadeus = useMemo(
+    () => resumenFactYtdWithFallback(monthlyFactAmadeus, asOfDay),
+    [monthlyFactAmadeus, asOfDay],
+  );
 
   const onExportPdf = () => {
     window.print();
@@ -410,31 +420,9 @@ export function ExecutiveClient({
         </div>
       ) : null}
 
-      {resumenYtdFacturacion ? (
-        <div className="mb-4 rounded-xl border border-emerald-200/90 bg-emerald-50/80 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-950/35">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900 dark:text-emerald-200/95">
-            Facturación Amadeus · YTD {resumenYtdFacturacion.yearActual} (ene → {mesCorteNombre})
-          </div>
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <div className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 dark:text-white">
-              {formatMXN(resumenYtdFacturacion.ytdActual)}
-            </div>
-            <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              Mismo lapso {resumenYtdFacturacion.yearAnterior}:{' '}
-              <span className="font-medium tabular-nums text-zinc-800 dark:text-zinc-200">
-                {formatMXN(resumenYtdFacturacion.ytdAnterior)}
-              </span>
-            </div>
-          </div>
-          <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-500">
-            Suma de los totales mensuales (último MTD de cada mes). Detalle en el panel inferior.
-          </p>
-        </div>
-      ) : null}
-
       <div className="grid gap-3 lg:grid-cols-3">
         <HeroFlujoBanner
-          title={resumenYtdFacturacion ? 'Facturación Amadeus · YTD' : 'Flujo total'}
+          title="Flujo total"
           yoyKpiKey="flujo_total"
           actual={flujoActualTotal}
           anterior={yoyFlujoTotal?.anterior ?? null}
@@ -442,9 +430,10 @@ export function ExecutiveClient({
           yoyDeltaPct={yoyFlujoTotal?.delta_pct ?? null}
           daily={dailyFlujo.total}
           className="min-h-[140px]"
-          facturacionYtd={resumenYtdFacturacion ?? undefined}
+          facturacionYtd={resumenFactTotal ?? undefined}
+          facturacionYtdLabel="total (Sadama + Amadeus)"
+          facturacionYtdKpiKey="facturacion_total_ytd"
           hideFlujoYoyWhenNoFacturacion
-          heroHighlight={resumenYtdFacturacion ? 'facturacion_ytd' : 'flujo'}
         />
         <HeroFlujoBanner
           title="Flujo Sadama"
@@ -455,6 +444,9 @@ export function ExecutiveClient({
           yoyDeltaPct={yoyFlujoSadama?.delta_pct ?? null}
           daily={dailyFlujo.sadama}
           className="min-h-[140px]"
+          facturacionYtd={resumenFactSadama ?? undefined}
+          facturacionYtdLabel="Sadama"
+          facturacionYtdKpiKey="facturacion_sadama_ytd"
         />
         <HeroFlujoBanner
           title="Flujo Amadeus"
@@ -465,6 +457,9 @@ export function ExecutiveClient({
           yoyDeltaPct={yoyFlujoAmadeus?.delta_pct ?? null}
           daily={dailyFlujo.amadeus}
           className="min-h-[140px]"
+          facturacionYtd={resumenFactAmadeus ?? undefined}
+          facturacionYtdLabel="Amadeus"
+          facturacionYtdKpiKey="facturacion_amadeus_ytd"
         />
       </div>
 
@@ -517,13 +512,13 @@ export function ExecutiveClient({
               </span>
               .
             </p>
-            {resumenYtdFacturacion ? (
+            {resumenFactAmadeus ? (
               <p className="mt-2 text-sm tabular-nums text-zinc-800 dark:text-zinc-100">
-                YTD {resumenYtdFacturacion.yearActual}:{' '}
-                <span className="font-semibold">{formatMXN(resumenYtdFacturacion.ytdActual)}</span>
+                YTD {resumenFactAmadeus.yearActual}:{' '}
+                <span className="font-semibold">{formatMXN(resumenFactAmadeus.ytdActual)}</span>
                 {' · '}
                 <span className="font-normal text-zinc-500 dark:text-zinc-400">
-                  {resumenYtdFacturacion.yearAnterior}: {formatMXN(resumenYtdFacturacion.ytdAnterior)}
+                  {resumenFactAmadeus.yearAnterior}: {formatMXN(resumenFactAmadeus.ytdAnterior)}
                 </span>
               </p>
             ) : null}
