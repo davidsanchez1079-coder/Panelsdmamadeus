@@ -1,4 +1,4 @@
-import { format, isValid, parse, parseISO, subMonths } from 'date-fns';
+import { format, isValid, parse, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import type { DailyKpiPoint } from '@/lib/dailyKpisFromRow';
@@ -25,6 +25,20 @@ export type FacturacionMesRow = {
 };
 
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Partes calendario del corte sin pasar por `Date` (evita desfase mes/año en UTC vs México). */
+export function parseIsoDayParts(asOfDay: string): { y: number; m: number; d: number } | null {
+  if (!ISO_DAY.test(asOfDay)) return null;
+  const [ys, ms, ds] = asOfDay.split('-');
+  const y = Number(ys);
+  const m = Number(ms);
+  const d = Number(ds);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  return { y, m, d };
+}
 
 /** `parseISO` a veces falla con strings locales; se refuerza con `parse` ISO. */
 export function parseAsOfDay(asOfDay: string): Date {
@@ -79,13 +93,14 @@ export function mesActualVsMesAnteriorCalendario(
   monthly: FacturacionMesRow[],
   asOfDay: string,
 ): { anterior: FacturacionMesRow | null; actual: FacturacionMesRow | null } {
-  const asOf = parseAsOfDay(asOfDay);
-  if (!isValid(asOf)) return { anterior: null, actual: null };
-  const cy = asOf.getFullYear();
-  const cm = asOf.getMonth();
-  const actualKey = `${cy}-${String(cm + 1).padStart(2, '0')}`;
-  const prev = subMonths(asOf, 1);
-  const anteriorKey = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+  const parts = parseIsoDayParts(asOfDay);
+  if (!parts) return { anterior: null, actual: null };
+  const { y: cy, m: cm } = parts;
+  const actualKey = `${cy}-${String(cm).padStart(2, '0')}`;
+  const anteriorKey =
+    cm === 1
+      ? `${cy - 1}-12`
+      : `${cy}-${String(cm - 1).padStart(2, '0')}`;
   const actual = monthly.find((m) => m.yyyymm === actualKey) ?? null;
   const anterior = monthly.find((m) => m.yyyymm === anteriorKey) ?? null;
   return { anterior, actual };
@@ -99,10 +114,10 @@ export function ytdComparativaAnioVsAnioAnterior(
   monthly: FacturacionMesRow[],
   asOfDay: string,
 ): { label: string; ytdAnioActual: number; ytdAnioAnterior: number }[] {
-  const asOf = parseAsOfDay(asOfDay);
-  if (!isValid(asOf)) return [];
-  const yAct = asOf.getFullYear();
-  const mMax = asOf.getMonth();
+  const parts = parseIsoDayParts(asOfDay);
+  if (!parts) return [];
+  const yAct = parts.y;
+  const mMax = parts.m - 1;
   const yAnt = yAct - 1;
   const out: { label: string; ytdAnioActual: number; ytdAnioAnterior: number }[] = [];
   let cumA = 0;
@@ -129,10 +144,10 @@ export function ytdFacturacionResumen(
   monthly: FacturacionMesRow[],
   asOfDay: string,
 ): { ytdActual: number; ytdAnterior: number; yearActual: string; yearAnterior: string } | null {
-  const asOf = parseAsOfDay(asOfDay);
-  if (!isValid(asOf)) return null;
-  const yAct = asOf.getFullYear();
-  const mMax = asOf.getMonth();
+  const parts = parseIsoDayParts(asOfDay);
+  if (!parts) return null;
+  const yAct = parts.y;
+  const mMax = parts.m - 1;
   if (!Number.isFinite(mMax) || mMax < 0 || mMax > 11) return null;
   const yAnt = yAct - 1;
   let cumA = 0;

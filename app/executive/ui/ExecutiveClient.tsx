@@ -375,8 +375,8 @@ export function ExecutiveClient({
     return [...byM.values()].sort((a, b) => a.yyyymm.localeCompare(b.yyyymm));
   }, [monthlyFactSadama, monthlyFactAmadeus]);
   const mesVsPair = useMemo(
-    () => mesActualVsMesAnteriorCalendario(monthlyFactAmadeus, asOfDay),
-    [monthlyFactAmadeus, asOfDay],
+    () => mesActualVsMesAnteriorCalendario(monthlyFactCombinada, asOfDay),
+    [monthlyFactCombinada, asOfDay],
   );
   const mesVsBarData = useMemo(() => {
     const { anterior, actual } = mesVsPair;
@@ -539,27 +539,35 @@ export function ExecutiveClient({
       <div className="dashboard-panel mt-4 rounded-xl border border-border bg-background p-4">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold">Facturación Amadeus (acumulada por mes)</div>
+            <div className="text-sm font-semibold">Facturación total (Sadama + Amadeus)</div>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Solo <span className="font-medium">Amadeus</span> (gráfico). En captura diaria, <span className="font-medium">Fact. día / mes</span>{' '}
-              es el MTD del mes en curso en cada fecha; aquí, por mes calendario, se toma el{' '}
-              <span className="font-medium">último registro de ese mes</span> (última fecha ≤ corte). Los montos netos mensuales
-              oficiales en <span className="font-medium">datos</span> sustituyen Amadeus y Sadama en las cifras YTD de los héroes y en el total combinado.
-              El YTD de este gráfico suma ene → mes de corte solo Amadeus.
-              Corte:{' '}
+              Misma base que los héroes de facturación YTD: <span className="font-medium">Sadama + Amadeus</span> por mes, último registro ≤ corte.
+              Los JSON <span className="font-medium">data/amadeus_monto_neto_mensual.json</span> y{' '}
+              <span className="font-medium">data/sadama_monto_neto_mensual.json</span> sustituyen el MTD de captura cuando existen.
+              Los gráficos <span className="font-medium">mes vs mes</span> y <span className="font-medium">YTD año vs año</span> usan este total combinado.
+              Corte operativo (México):{' '}
               <span className="font-medium text-zinc-700 dark:text-zinc-300">
                 {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
               </span>
               .
             </p>
-            {resumenFactAmadeus ? (
+            {resumenFactTotal ? (
               <p className="mt-2 text-sm tabular-nums text-zinc-800 dark:text-zinc-100">
-                YTD {resumenFactAmadeus.yearActual}:{' '}
-                <span className="font-semibold">{formatMXN(resumenFactAmadeus.ytdActual)}</span>
+                YTD total {resumenFactTotal.yearActual}:{' '}
+                <span className="font-semibold">{formatMXN(resumenFactTotal.ytdActual)}</span>
                 {' · '}
                 <span className="font-normal text-zinc-500 dark:text-zinc-400">
-                  {resumenFactAmadeus.yearAnterior}: {formatMXN(resumenFactAmadeus.ytdAnterior)}
+                  {resumenFactTotal.yearAnterior}: {formatMXN(resumenFactTotal.ytdAnterior)}
                 </span>
+              </p>
+            ) : null}
+            {resumenFactSadama && resumenFactAmadeus ? (
+              <p className="mt-1 text-xs tabular-nums text-zinc-600 dark:text-zinc-400">
+                Desglose YTD {resumenFactTotal?.yearActual ?? resumenFactSadama.yearActual}: Sadama{' '}
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">{formatMXN(resumenFactSadama.ytdActual)}</span>
+                {' · '}
+                Amadeus{' '}
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">{formatMXN(resumenFactAmadeus.ytdActual)}</span>
               </p>
             ) : null}
           </div>
@@ -627,7 +635,7 @@ export function ExecutiveClient({
                       />
                       <Bar
                         dataKey="total"
-                        name="Fact. Amadeus (MXN)"
+                        name="Fact. total Sadama+Amadeus (MXN)"
                         fill="var(--chart-line-flujo)"
                         radius={[4, 4, 0, 0]}
                       />
