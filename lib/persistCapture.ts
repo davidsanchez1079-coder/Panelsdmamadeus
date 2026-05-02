@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
 import type { DatosRow, SadamaAmadeusV1 } from './types';
@@ -54,6 +55,15 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
 
   v1.datos.rows = sortDatosRows(rows) as unknown as typeof v1.datos.rows;
   updateDatosMeta(v1.datos);
+  if (v1.analisis) {
+    const analisisRows = rebuildAnalisisRowsFromDatos(v1.datos.rows as DatosRow[]);
+    v1.analisis.rows = analisisRows as unknown as typeof v1.analisis.rows;
+    v1.analisis.count = analisisRows.length;
+    const fechas = v1.datos.rows.map((r) => r.fecha).filter((f) => typeof f === 'string' && ISO_DAY.test(f)).sort();
+    if (fechas.length) {
+      v1.analisis.rango = { min: fechas[0]!, max: fechas[fechas.length - 1]! };
+    }
+  }
   if (v1.meta) {
     v1.meta.generated = new Date().toISOString();
   }

@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
+  amountToInputString,
   buildDatosRowFromCapture,
   captureStringsFromDatosRow,
   nextDatosRowNumber,
+  parseMoney,
   suggestTcForFecha,
 } from '@/lib/captureHelpers';
 import type { CaptureSaveAnalysis } from '@/lib/captureSaveAnalysis';
@@ -30,6 +32,13 @@ function NumField({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const onBlurNormalize = () => {
+    if (value.trim() === '') return;
+    const n = parseMoney(value);
+    const next = n === 0 ? '' : String(n);
+    if (next !== value) onChange(next);
+  };
+
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
@@ -42,6 +51,7 @@ function NumField({
         autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlurNormalize}
         className={inputClass}
       />
     </div>
@@ -114,7 +124,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   useEffect(() => {
     if (!fecha) return;
     const s = suggestTcForFecha(initialRows, fecha);
-    if (s != null) setTc(String(s));
+    if (s != null) setTc(amountToInputString(s));
   }, [fecha, initialRows]);
 
   const built = useMemo(() => {
@@ -160,7 +170,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     const hoy = format(new Date(), 'yyyy-MM-dd');
     setFecha(hoy);
     const s = suggestTcForFecha(initialRows, hoy);
-    setTc(s != null ? String(s) : '');
+    setTc(s != null ? amountToInputString(s) : '');
     setSadama(emptySadama);
     setAmadeus(emptyAmadeus);
   };
@@ -344,6 +354,12 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               inputMode="decimal"
               value={tc}
               onChange={(e) => setTc(e.target.value)}
+              onBlur={() => {
+                if (tc.trim() === '') return;
+                const n = parseMoney(tc);
+                const next = n === 0 ? '' : String(n);
+                if (next !== tc) setTc(next);
+              }}
               className={inputClass}
             />
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400">

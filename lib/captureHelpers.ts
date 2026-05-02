@@ -26,11 +26,63 @@ export function nextDatosRowNumber(rows: unknown[]): number {
   return m + 1;
 }
 
-function parseMoney(raw: string): number {
-  const s = raw.trim().replace(/\s/g, '').replace(',', '.');
+/**
+ * Interpreta montos pegados desde Excel/hojas (coma como miles, punto decimal US;
+ * también 1.234,56 con coma decimal). Quita espacios finos y símbolos de moneda.
+ */
+export function parseMoney(raw: string): number {
+  let s = raw.trim();
   if (s === '') return 0;
+
+  s = s.replace(/[\s\u00A0\u202F]/g, '');
+  s = s.replace(/[$€£¥₿]/g, '');
+  s = s.replace(/\b(MXN|USD|EUR|mxn|usd|eur)\b/gi, '');
+
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      s = s.replace(/,/g, '');
+    }
+  } else if (lastComma !== -1) {
+    const segments = s.split(',');
+    if (segments.length === 2) {
+      const left = segments[0]!;
+      const right = segments[1]!;
+      const digitsOnlyLeft = left.replace(/\D/g, '');
+      if (right.length <= 2 && /^\d+$/.test(right)) {
+        s = left.replace(/\./g, '').replace(/,/g, '') + '.' + right;
+      } else if (right.length === 3 && digitsOnlyLeft.length <= 4) {
+        s = digitsOnlyLeft + right;
+      } else {
+        s = s.replace(/,/g, '');
+      }
+    } else {
+      s = s.replace(/,/g, '');
+    }
+  } else if (lastDot !== -1) {
+    const segments = s.split('.');
+    if (segments.length > 2) {
+      const last = segments[segments.length - 1]!;
+      if (last.length <= 2 && /^\d+$/.test(last)) {
+        s = segments.slice(0, -1).join('') + '.' + last;
+      } else {
+        s = s.replace(/\./g, '');
+      }
+    }
+  }
+
   const n = Number(s);
   return Number.isFinite(n) ? n : 0;
+}
+
+/** Texto para inputs de monto: el cero se muestra vacío (sin “0” en pantalla). */
+export function amountToInputString(n: number): string {
+  if (typeof n !== 'number' || !Number.isFinite(n) || n === 0) return '';
+  return String(n);
 }
 
 export function buildDatosRowFromCapture(input: {
@@ -93,26 +145,26 @@ export function buildDatosRowFromCapture(input: {
 export function captureStringsFromDatosRow(row: DatosRow) {
   return {
     fecha: row.fecha,
-    tc: String(row.tc),
+    tc: amountToInputString(row.tc),
     sadama: {
-      banco: String(row.sadama.banco),
-      inventarios: String(row.sadama.inventarios),
-      cxc: String(row.sadama.cxc),
-      cxp: String(row.sadama.cxp),
-      fact_dia_mes: String(row.sadama.fact_dia_mes),
+      banco: amountToInputString(row.sadama.banco),
+      inventarios: amountToInputString(row.sadama.inventarios),
+      cxc: amountToInputString(row.sadama.cxc),
+      cxp: amountToInputString(row.sadama.cxp),
+      fact_dia_mes: amountToInputString(row.sadama.fact_dia_mes),
     },
     amadeus: {
-      inventarios: String(row.amadeus.inventarios),
-      cxc: String(row.amadeus.cxc),
-      fact_dia_mes: String(row.amadeus.fact_dia_mes),
-      compras_mes: String(row.amadeus.compras_mes),
-      sandvik: String(row.amadeus.cxp.sandvik),
-      vargus: String(row.amadeus.cxp.vargus),
-      mexicana: String(row.amadeus.cxp.mexicana),
-      otros: String(row.amadeus.cxp.otros),
-      bajio_usd: String(row.amadeus.bancos.bajio_usd),
-      bajio_mxn: String(row.amadeus.bancos.bajio_mxn),
-      hsbc: String(row.amadeus.bancos.hsbc),
+      inventarios: amountToInputString(row.amadeus.inventarios),
+      cxc: amountToInputString(row.amadeus.cxc),
+      fact_dia_mes: amountToInputString(row.amadeus.fact_dia_mes),
+      compras_mes: amountToInputString(row.amadeus.compras_mes),
+      sandvik: amountToInputString(row.amadeus.cxp.sandvik),
+      vargus: amountToInputString(row.amadeus.cxp.vargus),
+      mexicana: amountToInputString(row.amadeus.cxp.mexicana),
+      otros: amountToInputString(row.amadeus.cxp.otros),
+      bajio_usd: amountToInputString(row.amadeus.bancos.bajio_usd),
+      bajio_mxn: amountToInputString(row.amadeus.bancos.bajio_mxn),
+      hsbc: amountToInputString(row.amadeus.bancos.hsbc),
     },
   };
 }

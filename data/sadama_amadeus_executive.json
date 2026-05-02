@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-05-01T16:03:29.566Z",
+    "generated": "2026-05-02T00:53:17.312Z",
     "schema_version": "1.0.1",
     "description": "Datos pre-agregados para Dashboard Ejecutivo",
     "moneda_base": "MXN"
@@ -10,9 +10,9 @@
       "yyyymm": "2025-01",
       "fecha_cierre": "2025-01-09",
       "dias_con_data": 4,
-      "flujo_total": 6338439.550000001,
-      "flujo_sadama": 599788.26,
-      "flujo_amadeus": 5738651.290000001,
+      "flujo_total": 19842012.540000003,
+      "flujo_sadama": 2652901.4299999997,
+      "flujo_amadeus": 17189111.11,
       "bancos_total": 2850556.6,
       "inventario_total": 6966408.6,
       "cxc_total": 11126005.65,
@@ -35,9 +35,9 @@
       "yyyymm": "2025-02",
       "fecha_cierre": "2025-02-09",
       "dias_con_data": 4,
-      "flujo_total": 6036711.48,
-      "flujo_sadama": 573492.59,
-      "flujo_amadeus": 5463218.890000001,
+      "flujo_total": 19213372.980000004,
+      "flujo_sadama": 2303902.77,
+      "flujo_amadeus": 16909470.21,
       "bancos_total": 2002932.48,
       "inventario_total": 6952746.99,
       "cxc_total": 10819059.5,
@@ -60,9 +60,9 @@
       "yyyymm": "2025-04",
       "fecha_cierre": "2025-04-30",
       "dias_con_data": 10,
-      "flujo_total": 4056017.9299999983,
-      "flujo_sadama": 391974.18000000005,
-      "flujo_amadeus": 3664043.749999998,
+      "flujo_total": 42338044.94,
+      "flujo_sadama": 4613153.85,
+      "flujo_amadeus": 37724891.089999996,
       "bancos_total": 747405.2,
       "inventario_total": 6491456.76,
       "cxc_total": 10743008.19,
@@ -84,10 +84,10 @@
     {
       "yyyymm": "2025-05",
       "fecha_cierre": "2025-05-29",
-      "dias_con_data": 14,
-      "flujo_total": 5054588.18,
-      "flujo_sadama": 601601.62,
-      "flujo_amadeus": 4452986.56,
+      "dias_con_data": 11,
+      "flujo_total": 55084696.47,
+      "flujo_sadama": 5793381.61,
+      "flujo_amadeus": 49291314.86000001,
       "bancos_total": 790514.75,
       "inventario_total": 6255418.09,
       "cxc_total": 12481405.57,
@@ -102,17 +102,17 @@
       "banco_sadama": 105682.34,
       "inventarios_sadama": 361636.17,
       "inventarios_amadeus": 5893781.92,
-      "tc": 19.37285714285714,
+      "tc": 19.35636363636364,
       "tc_min": 18.72,
       "tc_max": 19.7
     },
     {
       "yyyymm": "2025-06",
       "fecha_cierre": "2025-06-30",
-      "dias_con_data": 21,
-      "flujo_total": 4142062.139999999,
-      "flujo_sadama": 555672.6000000001,
-      "flujo_amadeus": 3586389.539999999,
+      "dias_con_data": 19,
+      "flujo_total": 93513810.25,
+      "flujo_sadama": 11109462,
+      "flujo_amadeus": 82404348.25,
       "bancos_total": 1348250,
       "inventario_total": 7866409.390000001,
       "cxc_total": 9562494.2,
@@ -127,17 +127,17 @@
       "banco_sadama": 139749.75,
       "inventarios_sadama": 414805.2,
       "inventarios_amadeus": 7451604.19,
-      "tc": 19.043809523809525,
+      "tc": 19.021578947368422,
       "tc_min": 18.34,
       "tc_max": 19.99
     },
     {
       "yyyymm": "2025-07",
       "fecha_cierre": "2025-07-31",
-      "dias_con_data": 18,
-      "flujo_total": 4590800.719999999,
-      "flujo_sadama": 769203.09,
-      "flujo_amadeus": 3821597.629999999,
+      "dias_con_data": 16,
+      "flujo_total": 68832473.04,
+      "flujo_sadama": 10319901.24,
+      "flujo_amadeus": 58512571.8,
       "bancos_total": 1098348.81,
       "inventario_total": 7018703.82,
       "cxc_total": 12129351.57,
@@ -152,7 +152,7 @@
       "banco_sadama": 77197.97,
       "inventarios_sadama": 441291.24,
       "inventarios_amadeus": 6577412.58,
-      "tc": 18.712777777777777,
+      "tc": 18.7175,
       "tc_min": 18.43,
       "tc_max": 19.57
     },
@@ -160,9 +160,9 @@
       "yyyymm": "2025-08",
       "fecha_cierre": "2025-08-29",
       "dias_con_data": 8,
-      "flujo_total": 4548339.77,
-      "flujo_sadama": 716874.23,
-      "flujo_amadeus": 3831465.54,
+      "flujo_total": 40953123.250000015,
+      "flujo_sadama": 6532299.34,
+      "flujo_amadeus": 34420823.910000004,
       "bancos_total": 1189583.1500000001,
       "inventario_total": 6985541.78,
       "cxc_total": 10433447.61,
@@ -185,9 +185,9 @@
       "yyyymm": "2025-09",
       "fecha_cierre": "2025-09-30",
       "dias_con_data": 10,
-      "flujo_total": 4882627.240000001,
-      "flujo_sadama": 600271.8099999999,
-      "flujo_amadeus": 4282355.430000002,
+      "flujo_total": 52517475.49,
+      "flujo_sadama": 6125683.709999999,
+      "flujo_amadeus": 46391791.779999994,
       "bancos_total": 1342266.71,
       "inventario_total": 6997212.52,
       "cxc_total": 11192991.25,
@@ -209,10 +209,10 @@
     {
       "yyyymm": "2025-10",
       "fecha_cierre": "2025-10-29",
-      "dias_con_data": 14,
-      "flujo_total": -4858504.590000001,
-      "flujo_sadama": 538684.88,
-      "flujo_amadeus": -5397189.470000001,
+      "dias_con_data": 13,
+      "flujo_total": 66914425.519999996,
+      "flujo_sadama": 8519348.750000002,
+      "flujo_amadeus": 58395076.77,
       "bancos_total": 1413177.35,
       "inventario_total": 1007008.7,
       "cxc_total": 674552.5,
@@ -227,17 +227,17 @@
       "banco_sadama": 179,
       "inventarios_sadama": 1007002.7,
       "inventarios_amadeus": 6,
-      "tc": 18.48071428571428,
+      "tc": 18.48384615384615,
       "tc_min": 18.21,
       "tc_max": 19.06
     },
     {
       "yyyymm": "2025-11",
       "fecha_cierre": "2025-11-18",
-      "dias_con_data": 9,
-      "flujo_total": 5221487.669999997,
-      "flujo_sadama": 769787.14,
-      "flujo_amadeus": 4451700.5299999975,
+      "dias_con_data": 8,
+      "flujo_total": 41929118.37,
+      "flujo_sadama": 5879217.96,
+      "flujo_amadeus": 36049900.41,
       "bancos_total": 1974966.2000000002,
       "inventario_total": 8091498.75,
       "cxc_total": 12231120.899999999,
@@ -252,7 +252,7 @@
       "banco_sadama": 221085.1,
       "inventarios_sadama": 942789.69,
       "inventarios_amadeus": 7148709.06,
-      "tc": 18.51111111111111,
+      "tc": 18.53375,
       "tc_min": 18.32,
       "tc_max": 18.91
     },
@@ -260,9 +260,9 @@
       "yyyymm": "2025-12",
       "fecha_cierre": "2025-12-08",
       "dias_con_data": 5,
-      "flujo_total": 4857331.019999999,
-      "flujo_sadama": 684240.79,
-      "flujo_amadeus": 4173090.2299999986,
+      "flujo_total": 23296112.87,
+      "flujo_sadama": 3191799.6500000004,
+      "flujo_amadeus": 20104313.22,
       "bancos_total": 1450066.91,
       "inventario_total": 6897633.64,
       "cxc_total": 11689793.38,
@@ -284,10 +284,10 @@
     {
       "yyyymm": "2026-01",
       "fecha_cierre": "2026-01-29",
-      "dias_con_data": 9,
-      "flujo_total": 3655396.33,
-      "flujo_sadama": 857231.1599999999,
-      "flujo_amadeus": 2798165.17,
+      "dias_con_data": 7,
+      "flujo_total": 23709006.999999993,
+      "flujo_sadama": 6413992.110000001,
+      "flujo_amadeus": 17295014.889999997,
       "bancos_total": 1120850.5,
       "inventario_total": 9968052.64,
       "cxc_total": 8053143.47,
@@ -302,17 +302,17 @@
       "banco_sadama": 117222.51,
       "inventarios_sadama": 1046581.96,
       "inventarios_amadeus": 8921470.68,
-      "tc": 17.461111111111112,
+      "tc": 17.484285714285715,
       "tc_min": 17.19,
       "tc_max": 18
     },
     {
       "yyyymm": "2026-02",
       "fecha_cierre": "2026-02-28",
-      "dias_con_data": 11,
-      "flujo_total": 3056074.1000000015,
-      "flujo_sadama": 830876.4000000001,
-      "flujo_amadeus": 2225197.700000001,
+      "dias_con_data": 10,
+      "flujo_total": 33228340.370000005,
+      "flujo_sadama": 8588877.63,
+      "flujo_amadeus": 24639462.740000002,
       "bancos_total": 723216.93,
       "inventario_total": 7499962.48,
       "cxc_total": 7236264.48,
@@ -327,7 +327,7 @@
       "banco_sadama": 91280.53,
       "inventarios_sadama": 1084982.36,
       "inventarios_amadeus": 6414980.12,
-      "tc": 17.213636363636365,
+      "tc": 17.213,
       "tc_min": 17.13,
       "tc_max": 17.31
     },
@@ -335,9 +335,9 @@
       "yyyymm": "2026-03",
       "fecha_cierre": "2026-03-31",
       "dias_con_data": 3,
-      "flujo_total": 3005296.5699999994,
-      "flujo_sadama": 499436.38000000006,
-      "flujo_amadeus": 2505860.1899999995,
+      "flujo_total": 9976707.528799996,
+      "flujo_sadama": 2313161.92,
+      "flujo_amadeus": 7663545.608799997,
       "bancos_total": 725356.7000000001,
       "inventario_total": 7420221.68,
       "cxc_total": 8168753.399999999,
@@ -359,10 +359,10 @@
     {
       "yyyymm": "2026-04",
       "fecha_cierre": "2026-04-30",
-      "dias_con_data": 8,
-      "flujo_total": 3490194.21,
-      "flujo_sadama": 938432.58,
-      "flujo_amadeus": 2551761.63,
+      "dias_con_data": 7,
+      "flujo_total": 25074433.9392,
+      "flujo_sadama": 5802476.33,
+      "flujo_amadeus": 19271957.609199997,
       "bancos_total": 581926.06,
       "inventario_total": 7308302.71,
       "cxc_total": 9328628.14,
@@ -377,7 +377,7 @@
       "banco_sadama": 32275.26,
       "inventarios_sadama": 629649.12,
       "inventarios_amadeus": 6678653.59,
-      "tc": 17.4725,
+      "tc": 17.482857142857142,
       "tc_min": 17.26,
       "tc_max": 17.85
     },
@@ -385,23 +385,23 @@
       "yyyymm": "2026-05",
       "fecha_cierre": "2026-05-01",
       "dias_con_data": 1,
-      "flujo_total": 3181827.86,
-      "flujo_sadama": 954998.57,
-      "flujo_amadeus": 2226829.29,
-      "bancos_total": 706316.58,
-      "inventario_total": 9896056.23,
-      "cxc_total": 8844432.370000001,
-      "cxp_total": 6368921.090000001,
-      "cxp_sandvik": 3778013.44,
-      "cxp_vargus": 1953027.13,
-      "cxp_mexicana": 179016.53,
-      "cxp_otros": 124363.99,
-      "bajio_usd_mxn": 283096.44,
-      "bajio_mxn": 61073,
-      "hsbc": 184247,
-      "banco_sadama": 177900.14,
-      "inventarios_sadama": 997705,
-      "inventarios_amadeus": 8898351.23,
+      "flujo_total": -5120436.32,
+      "flujo_sadama": 32275.26,
+      "flujo_amadeus": -5152711.58,
+      "bancos_total": 582986.0800000001,
+      "inventario_total": 0,
+      "cxc_total": 0,
+      "cxp_total": 5703422.4,
+      "cxp_sandvik": 3624393.66,
+      "cxp_vargus": 1905935.25,
+      "cxp_mexicana": 102254.58,
+      "cxp_otros": 70838.91,
+      "bajio_usd_mxn": 308465.82,
+      "bajio_mxn": 51771,
+      "hsbc": 190474,
+      "banco_sadama": 32275.26,
+      "inventarios_sadama": 0,
+      "inventarios_amadeus": 0,
       "tc": 17.46,
       "tc_min": 17.46,
       "tc_max": 17.46
@@ -689,22 +689,22 @@
       "hasYoY": true,
       "yoy": {
         "flujo_total": {
-          "actual": 3655396.33,
-          "anterior": 6338439.550000001,
-          "delta": -2683043.2200000007,
-          "delta_pct": -0.4232971220810965
+          "actual": 23709006.999999993,
+          "anterior": 19842012.540000003,
+          "delta": 3866994.4599999897,
+          "delta_pct": 0.1948892256873853
         },
         "flujo_sadama": {
-          "actual": 857231.1599999999,
-          "anterior": 599788.26,
-          "delta": 257442.8999999999,
-          "delta_pct": 0.4292229727870964
+          "actual": 6413992.110000001,
+          "anterior": 2652901.4299999997,
+          "delta": 3761090.6800000016,
+          "delta_pct": 1.4177272617324503
         },
         "flujo_amadeus": {
-          "actual": 2798165.17,
-          "anterior": 5738651.290000001,
-          "delta": -2940486.120000001,
-          "delta_pct": -0.5124002089348072
+          "actual": 17295014.889999997,
+          "anterior": 17189111.11,
+          "delta": 105903.77999999747,
+          "delta_pct": 0.006161096948078164
         },
         "bancos_total": {
           "actual": 1120850.5,
@@ -752,7 +752,7 @@
           "actual": 124363.99,
           "anterior": 0,
           "delta": 124363.99,
-          "delta_pct": null
+          "delta_pct": 1
         },
         "bajio_usd_mxn": {
           "actual": 522649.99,
@@ -791,10 +791,10 @@
           "delta_pct": 0.38849072543354574
         },
         "tc": {
-          "actual": 17.461111111111112,
+          "actual": 17.484285714285715,
           "anterior": 18.665,
-          "delta": -1.203888888888887,
-          "delta_pct": -0.06449980653034487
+          "delta": -1.1807142857142843,
+          "delta_pct": -0.06325819907389683
         }
       }
     },
@@ -804,22 +804,22 @@
       "hasYoY": true,
       "yoy": {
         "flujo_total": {
-          "actual": 3056074.1000000015,
-          "anterior": 6036711.48,
-          "delta": -2980637.379999999,
-          "delta_pct": -0.49375183655456045
+          "actual": 33228340.370000005,
+          "anterior": 19213372.980000004,
+          "delta": 14014967.39,
+          "delta_pct": 0.7294381577138361
         },
         "flujo_sadama": {
-          "actual": 830876.4000000001,
-          "anterior": 573492.59,
-          "delta": 257383.81000000017,
-          "delta_pct": 0.448800585200238
+          "actual": 8588877.63,
+          "anterior": 2303902.77,
+          "delta": 6284974.860000001,
+          "delta_pct": 2.7279687935789068
         },
         "flujo_amadeus": {
-          "actual": 2225197.700000001,
-          "anterior": 5463218.890000001,
-          "delta": -3238021.1899999995,
-          "delta_pct": -0.5926947565522126
+          "actual": 24639462.740000002,
+          "anterior": 16909470.21,
+          "delta": 7729992.530000001,
+          "delta_pct": 0.4571398414025179
         },
         "bancos_total": {
           "actual": 723216.93,
@@ -867,7 +867,7 @@
           "actual": 122296.93,
           "anterior": 0,
           "delta": 122296.93,
-          "delta_pct": null
+          "delta_pct": 1
         },
         "bajio_usd_mxn": {
           "actual": 128610.4,
@@ -906,10 +906,10 @@
           "delta_pct": -0.0016333873107141868
         },
         "tc": {
-          "actual": 17.213636363636365,
+          "actual": 17.213,
           "anterior": 18.8875,
-          "delta": -1.6738636363636346,
-          "delta_pct": -0.08862282654473247
+          "delta": -1.6744999999999983,
+          "delta_pct": -0.08865651886168092
         }
       }
     },
@@ -944,22 +944,22 @@
       "hasYoY": true,
       "yoy": {
         "flujo_total": {
-          "actual": 3490194.21,
-          "anterior": 4056017.9299999983,
-          "delta": -565823.7199999983,
-          "delta_pct": -0.13950227286100744
+          "actual": 25074433.9392,
+          "anterior": 42338044.94,
+          "delta": -17263611.0008,
+          "delta_pct": -0.40775645227041984
         },
         "flujo_sadama": {
-          "actual": 938432.58,
-          "anterior": 391974.18000000005,
-          "delta": 546458.3999999999,
-          "delta_pct": 1.3941183574897709
+          "actual": 5802476.33,
+          "anterior": 4613153.85,
+          "delta": 1189322.4800000004,
+          "delta_pct": 0.2578111458389797
         },
         "flujo_amadeus": {
-          "actual": 2551761.63,
-          "anterior": 3664043.749999998,
-          "delta": -1112282.1199999982,
-          "delta_pct": -0.3035668228579418
+          "actual": 19271957.609199997,
+          "anterior": 37724891.089999996,
+          "delta": -18452933.4808,
+          "delta_pct": -0.48914477809298296
         },
         "bancos_total": {
           "actual": 581926.06,
@@ -1046,10 +1046,10 @@
           "delta_pct": 0.09250288693607954
         },
         "tc": {
-          "actual": 17.4725,
+          "actual": 17.482857142857142,
           "anterior": 19.662,
-          "delta": -2.189499999999999,
-          "delta_pct": -0.11135693215339228
+          "delta": -2.179142857142857,
+          "delta_pct": -0.11083017277707542
         }
       }
     },
@@ -1059,112 +1059,112 @@
       "hasYoY": true,
       "yoy": {
         "flujo_total": {
-          "actual": 3181827.86,
-          "anterior": 5054588.18,
-          "delta": -1872760.3199999998,
-          "delta_pct": -0.3705070034014126
+          "actual": -5120436.32,
+          "anterior": 55084696.47,
+          "delta": -60205132.79,
+          "delta_pct": -1.0929556963754656
         },
         "flujo_sadama": {
-          "actual": 954998.57,
-          "anterior": 601601.62,
-          "delta": 353396.94999999995,
-          "delta_pct": 0.5874268589901736
+          "actual": 32275.26,
+          "anterior": 5793381.61,
+          "delta": -5761106.350000001,
+          "delta_pct": -0.9944289428570889
         },
         "flujo_amadeus": {
-          "actual": 2226829.29,
-          "anterior": 4452986.56,
-          "delta": -2226157.2699999996,
-          "delta_pct": -0.4999245427769716
+          "actual": -5152711.58,
+          "anterior": 49291314.86000001,
+          "delta": -54444026.440000005,
+          "delta_pct": -1.104535892268953
         },
         "bancos_total": {
-          "actual": 706316.58,
+          "actual": 582986.0800000001,
           "anterior": 790514.75,
-          "delta": -84198.17000000004,
-          "delta_pct": -0.10651056163088676
+          "delta": -207528.66999999993,
+          "delta_pct": -0.26252346335093674
         },
         "inventario_total": {
-          "actual": 9896056.23,
+          "actual": 0,
           "anterior": 6255418.09,
-          "delta": 3640638.1400000006,
-          "delta_pct": 0.5819975719640509
+          "delta": -6255418.09,
+          "delta_pct": -1
         },
         "cxc_total": {
-          "actual": 8844432.370000001,
+          "actual": 0,
           "anterior": 12481405.57,
-          "delta": -3636973.1999999993,
-          "delta_pct": -0.2913913164348844
+          "delta": -12481405.57,
+          "delta_pct": -1
         },
         "cxp_total": {
-          "actual": 6368921.090000001,
+          "actual": 5703422.4,
           "anterior": 8217332.140000001,
-          "delta": -1848411.0499999998,
-          "delta_pct": -0.22494053039457643
+          "delta": -2513909.74,
+          "delta_pct": -0.30592772656260186
         },
         "cxp_sandvik": {
-          "actual": 3778013.44,
+          "actual": 3624393.66,
           "anterior": 4570923.75,
-          "delta": -792910.31,
-          "delta_pct": -0.17346828636115402
+          "delta": -946530.0899999999,
+          "delta_pct": -0.20707632456130992
         },
         "cxp_vargus": {
-          "actual": 1953027.13,
+          "actual": 1905935.25,
           "anterior": 2165564.34,
-          "delta": -212537.20999999996,
-          "delta_pct": -0.09814402928337838
+          "delta": -259629.08999999985,
+          "delta_pct": -0.11988980664504287
         },
         "cxp_mexicana": {
-          "actual": 179016.53,
+          "actual": 102254.58,
           "anterior": 317021.53,
-          "delta": -138005.00000000003,
-          "delta_pct": -0.4353174372731089
+          "delta": -214766.95,
+          "delta_pct": -0.6774522537948763
         },
         "cxp_otros": {
-          "actual": 124363.99,
+          "actual": 70838.91,
           "anterior": 723000,
-          "delta": -598636.01,
-          "delta_pct": -0.827988948824343
+          "delta": -652161.09,
+          "delta_pct": -0.9020208713692945
         },
         "bajio_usd_mxn": {
-          "actual": 283096.44,
+          "actual": 308465.82,
           "anterior": 120213.41,
-          "delta": 162883.03,
-          "delta_pct": 1.3549489195922484
+          "delta": 188252.41,
+          "delta_pct": 1.5659851093151753
         },
         "bajio_mxn": {
-          "actual": 61073,
+          "actual": 51771,
           "anterior": 224288,
-          "delta": -163215,
-          "delta_pct": -0.7277027750035668
+          "delta": -172517,
+          "delta_pct": -0.7691762376943929
         },
         "hsbc": {
-          "actual": 184247,
+          "actual": 190474,
           "anterior": 340331,
-          "delta": -156084,
-          "delta_pct": -0.45862410418092975
+          "delta": -149857,
+          "delta_pct": -0.44032721086236637
         },
         "banco_sadama": {
-          "actual": 177900.14,
+          "actual": 32275.26,
           "anterior": 105682.34,
-          "delta": 72217.80000000002,
-          "delta_pct": 0.6833478516845862
+          "delta": -73407.08,
+          "delta_pct": -0.6946011982702125
         },
         "inventarios_sadama": {
-          "actual": 997705,
+          "actual": 0,
           "anterior": 361636.17,
-          "delta": 636068.8300000001,
-          "delta_pct": 1.7588639709352085
+          "delta": -361636.17,
+          "delta_pct": -1
         },
         "inventarios_amadeus": {
-          "actual": 8898351.23,
+          "actual": 0,
           "anterior": 5893781.92,
-          "delta": 3004569.3100000005,
-          "delta_pct": 0.509786305428824
+          "delta": -5893781.92,
+          "delta_pct": -1
         },
         "tc": {
           "actual": 17.46,
-          "anterior": 19.37285714285714,
-          "delta": -1.9128571428571384,
-          "delta_pct": -0.09873903104490798
+          "anterior": 19.35636363636364,
+          "delta": -1.8963636363636382,
+          "delta_pct": -0.09797106894608312
         }
       }
     }
@@ -1177,135 +1177,135 @@
         "yyyymm": "2026-05",
         "fecha_cierre": "2026-05-01",
         "dias_con_data": 1,
-        "flujo_total": 3181827.86,
-        "flujo_sadama": 954998.57,
-        "flujo_amadeus": 2226829.29,
-        "bancos_total": 706316.58,
-        "inventario_total": 9896056.23,
-        "cxc_total": 8844432.370000001,
-        "cxp_total": 6368921.090000001,
-        "cxp_sandvik": 3778013.44,
-        "cxp_vargus": 1953027.13,
-        "cxp_mexicana": 179016.53,
-        "cxp_otros": 124363.99,
-        "bajio_usd_mxn": 283096.44,
-        "bajio_mxn": 61073,
-        "hsbc": 184247,
-        "banco_sadama": 177900.14,
-        "inventarios_sadama": 997705,
-        "inventarios_amadeus": 8898351.23,
+        "flujo_total": -5120436.32,
+        "flujo_sadama": 32275.26,
+        "flujo_amadeus": -5152711.58,
+        "bancos_total": 582986.0800000001,
+        "inventario_total": 0,
+        "cxc_total": 0,
+        "cxp_total": 5703422.4,
+        "cxp_sandvik": 3624393.66,
+        "cxp_vargus": 1905935.25,
+        "cxp_mexicana": 102254.58,
+        "cxp_otros": 70838.91,
+        "bajio_usd_mxn": 308465.82,
+        "bajio_mxn": 51771,
+        "hsbc": 190474,
+        "banco_sadama": 32275.26,
+        "inventarios_sadama": 0,
+        "inventarios_amadeus": 0,
         "tc": 17.46,
         "tc_min": 17.46,
         "tc_max": 17.46
       },
       "yoy": {
         "flujo_total": {
-          "actual": 3181827.86,
-          "anterior": 5054588.18,
-          "delta": -1872760.3199999998,
-          "delta_pct": -0.3705070034014126
+          "actual": -5120436.32,
+          "anterior": 55084696.47,
+          "delta": -60205132.79,
+          "delta_pct": -1.0929556963754656
         },
         "flujo_sadama": {
-          "actual": 954998.57,
-          "anterior": 601601.62,
-          "delta": 353396.94999999995,
-          "delta_pct": 0.5874268589901736
+          "actual": 32275.26,
+          "anterior": 5793381.61,
+          "delta": -5761106.350000001,
+          "delta_pct": -0.9944289428570889
         },
         "flujo_amadeus": {
-          "actual": 2226829.29,
-          "anterior": 4452986.56,
-          "delta": -2226157.2699999996,
-          "delta_pct": -0.4999245427769716
+          "actual": -5152711.58,
+          "anterior": 49291314.86000001,
+          "delta": -54444026.440000005,
+          "delta_pct": -1.104535892268953
         },
         "bancos_total": {
-          "actual": 706316.58,
+          "actual": 582986.0800000001,
           "anterior": 790514.75,
-          "delta": -84198.17000000004,
-          "delta_pct": -0.10651056163088676
+          "delta": -207528.66999999993,
+          "delta_pct": -0.26252346335093674
         },
         "inventario_total": {
-          "actual": 9896056.23,
+          "actual": 0,
           "anterior": 6255418.09,
-          "delta": 3640638.1400000006,
-          "delta_pct": 0.5819975719640509
+          "delta": -6255418.09,
+          "delta_pct": -1
         },
         "cxc_total": {
-          "actual": 8844432.370000001,
+          "actual": 0,
           "anterior": 12481405.57,
-          "delta": -3636973.1999999993,
-          "delta_pct": -0.2913913164348844
+          "delta": -12481405.57,
+          "delta_pct": -1
         },
         "cxp_total": {
-          "actual": 6368921.090000001,
+          "actual": 5703422.4,
           "anterior": 8217332.140000001,
-          "delta": -1848411.0499999998,
-          "delta_pct": -0.22494053039457643
+          "delta": -2513909.74,
+          "delta_pct": -0.30592772656260186
         },
         "cxp_sandvik": {
-          "actual": 3778013.44,
+          "actual": 3624393.66,
           "anterior": 4570923.75,
-          "delta": -792910.31,
-          "delta_pct": -0.17346828636115402
+          "delta": -946530.0899999999,
+          "delta_pct": -0.20707632456130992
         },
         "cxp_vargus": {
-          "actual": 1953027.13,
+          "actual": 1905935.25,
           "anterior": 2165564.34,
-          "delta": -212537.20999999996,
-          "delta_pct": -0.09814402928337838
+          "delta": -259629.08999999985,
+          "delta_pct": -0.11988980664504287
         },
         "cxp_mexicana": {
-          "actual": 179016.53,
+          "actual": 102254.58,
           "anterior": 317021.53,
-          "delta": -138005.00000000003,
-          "delta_pct": -0.4353174372731089
+          "delta": -214766.95,
+          "delta_pct": -0.6774522537948763
         },
         "cxp_otros": {
-          "actual": 124363.99,
+          "actual": 70838.91,
           "anterior": 723000,
-          "delta": -598636.01,
-          "delta_pct": -0.827988948824343
+          "delta": -652161.09,
+          "delta_pct": -0.9020208713692945
         },
         "bajio_usd_mxn": {
-          "actual": 283096.44,
+          "actual": 308465.82,
           "anterior": 120213.41,
-          "delta": 162883.03,
-          "delta_pct": 1.3549489195922484
+          "delta": 188252.41,
+          "delta_pct": 1.5659851093151753
         },
         "bajio_mxn": {
-          "actual": 61073,
+          "actual": 51771,
           "anterior": 224288,
-          "delta": -163215,
-          "delta_pct": -0.7277027750035668
+          "delta": -172517,
+          "delta_pct": -0.7691762376943929
         },
         "hsbc": {
-          "actual": 184247,
+          "actual": 190474,
           "anterior": 340331,
-          "delta": -156084,
-          "delta_pct": -0.45862410418092975
+          "delta": -149857,
+          "delta_pct": -0.44032721086236637
         },
         "banco_sadama": {
-          "actual": 177900.14,
+          "actual": 32275.26,
           "anterior": 105682.34,
-          "delta": 72217.80000000002,
-          "delta_pct": 0.6833478516845862
+          "delta": -73407.08,
+          "delta_pct": -0.6946011982702125
         },
         "inventarios_sadama": {
-          "actual": 997705,
+          "actual": 0,
           "anterior": 361636.17,
-          "delta": 636068.8300000001,
-          "delta_pct": 1.7588639709352085
+          "delta": -361636.17,
+          "delta_pct": -1
         },
         "inventarios_amadeus": {
-          "actual": 8898351.23,
+          "actual": 0,
           "anterior": 5893781.92,
-          "delta": 3004569.3100000005,
-          "delta_pct": 0.509786305428824
+          "delta": -5893781.92,
+          "delta_pct": -1
         },
         "tc": {
           "actual": 17.46,
-          "anterior": 19.37285714285714,
-          "delta": -1.9128571428571384,
-          "delta_pct": -0.09873903104490798
+          "anterior": 19.35636363636364,
+          "delta": -1.8963636363636382,
+          "delta_pct": -0.09797106894608312
         }
       },
       "hasYoY": true
@@ -1316,112 +1316,112 @@
       "fecha_corte": "2026-05-01",
       "comparativo": {
         "flujo_total": {
-          "actual": 3181827.86,
-          "anterior": 5054588.18,
-          "delta": -1872760.3199999998,
-          "delta_pct": -0.3705070034014126
+          "actual": -5120436.32,
+          "anterior": 55084696.47,
+          "delta": -60205132.79,
+          "delta_pct": -1.0929556963754656
         },
         "flujo_sadama": {
-          "actual": 954998.57,
-          "anterior": 601601.62,
-          "delta": 353396.94999999995,
-          "delta_pct": 0.5874268589901736
+          "actual": 32275.26,
+          "anterior": 5793381.61,
+          "delta": -5761106.350000001,
+          "delta_pct": -0.9944289428570889
         },
         "flujo_amadeus": {
-          "actual": 2226829.29,
-          "anterior": 4452986.56,
-          "delta": -2226157.2699999996,
-          "delta_pct": -0.4999245427769716
+          "actual": -5152711.58,
+          "anterior": 49291314.86000001,
+          "delta": -54444026.440000005,
+          "delta_pct": -1.104535892268953
         },
         "bancos_total": {
-          "actual": 706316.58,
+          "actual": 582986.0800000001,
           "anterior": 790514.75,
-          "delta": -84198.17000000004,
-          "delta_pct": -0.10651056163088676
+          "delta": -207528.66999999993,
+          "delta_pct": -0.26252346335093674
         },
         "inventario_total": {
-          "actual": 9896056.23,
+          "actual": 0,
           "anterior": 6255418.09,
-          "delta": 3640638.1400000006,
-          "delta_pct": 0.5819975719640509
+          "delta": -6255418.09,
+          "delta_pct": -1
         },
         "cxc_total": {
-          "actual": 8844432.370000001,
+          "actual": 0,
           "anterior": 12481405.57,
-          "delta": -3636973.1999999993,
-          "delta_pct": -0.2913913164348844
+          "delta": -12481405.57,
+          "delta_pct": -1
         },
         "cxp_total": {
-          "actual": 6368921.090000001,
+          "actual": 5703422.4,
           "anterior": 8217332.140000001,
-          "delta": -1848411.0499999998,
-          "delta_pct": -0.22494053039457643
+          "delta": -2513909.74,
+          "delta_pct": -0.30592772656260186
         },
         "cxp_sandvik": {
-          "actual": 3778013.44,
+          "actual": 3624393.66,
           "anterior": 4570923.75,
-          "delta": -792910.31,
-          "delta_pct": -0.17346828636115402
+          "delta": -946530.0899999999,
+          "delta_pct": -0.20707632456130992
         },
         "cxp_vargus": {
-          "actual": 1953027.13,
+          "actual": 1905935.25,
           "anterior": 2165564.34,
-          "delta": -212537.20999999996,
-          "delta_pct": -0.09814402928337838
+          "delta": -259629.08999999985,
+          "delta_pct": -0.11988980664504287
         },
         "cxp_mexicana": {
-          "actual": 179016.53,
+          "actual": 102254.58,
           "anterior": 317021.53,
-          "delta": -138005.00000000003,
-          "delta_pct": -0.4353174372731089
+          "delta": -214766.95,
+          "delta_pct": -0.6774522537948763
         },
         "cxp_otros": {
-          "actual": 124363.99,
+          "actual": 70838.91,
           "anterior": 723000,
-          "delta": -598636.01,
-          "delta_pct": -0.827988948824343
+          "delta": -652161.09,
+          "delta_pct": -0.9020208713692945
         },
         "bajio_usd_mxn": {
-          "actual": 283096.44,
+          "actual": 308465.82,
           "anterior": 120213.41,
-          "delta": 162883.03,
-          "delta_pct": 1.3549489195922484
+          "delta": 188252.41,
+          "delta_pct": 1.5659851093151753
         },
         "bajio_mxn": {
-          "actual": 61073,
+          "actual": 51771,
           "anterior": 224288,
-          "delta": -163215,
-          "delta_pct": -0.7277027750035668
+          "delta": -172517,
+          "delta_pct": -0.7691762376943929
         },
         "hsbc": {
-          "actual": 184247,
+          "actual": 190474,
           "anterior": 340331,
-          "delta": -156084,
-          "delta_pct": -0.45862410418092975
+          "delta": -149857,
+          "delta_pct": -0.44032721086236637
         },
         "banco_sadama": {
-          "actual": 177900.14,
+          "actual": 32275.26,
           "anterior": 105682.34,
-          "delta": 72217.80000000002,
-          "delta_pct": 0.6833478516845862
+          "delta": -73407.08,
+          "delta_pct": -0.6946011982702125
         },
         "inventarios_sadama": {
-          "actual": 997705,
+          "actual": 0,
           "anterior": 361636.17,
-          "delta": 636068.8300000001,
-          "delta_pct": 1.7588639709352085
+          "delta": -361636.17,
+          "delta_pct": -1
         },
         "inventarios_amadeus": {
-          "actual": 8898351.23,
+          "actual": 0,
           "anterior": 5893781.92,
-          "delta": 3004569.3100000005,
-          "delta_pct": 0.509786305428824
+          "delta": -5893781.92,
+          "delta_pct": -1
         },
         "tc": {
           "actual": 17.46,
-          "anterior": 19.37285714285714,
-          "delta": -1.9128571428571384,
-          "delta_pct": -0.09873903104490798
+          "anterior": 19.35636363636364,
+          "delta": -1.8963636363636382,
+          "delta_pct": -0.09797106894608312
         }
       }
     },
@@ -1429,10 +1429,10 @@
       {
         "yyyymm": "2025-06",
         "fecha_cierre": "2025-06-30",
-        "dias_con_data": 21,
-        "flujo_total": 4142062.139999999,
-        "flujo_sadama": 555672.6000000001,
-        "flujo_amadeus": 3586389.539999999,
+        "dias_con_data": 19,
+        "flujo_total": 93513810.25,
+        "flujo_sadama": 11109462,
+        "flujo_amadeus": 82404348.25,
         "bancos_total": 1348250,
         "inventario_total": 7866409.390000001,
         "cxc_total": 9562494.2,
@@ -1447,17 +1447,17 @@
         "banco_sadama": 139749.75,
         "inventarios_sadama": 414805.2,
         "inventarios_amadeus": 7451604.19,
-        "tc": 19.043809523809525,
+        "tc": 19.021578947368422,
         "tc_min": 18.34,
         "tc_max": 19.99
       },
       {
         "yyyymm": "2025-07",
         "fecha_cierre": "2025-07-31",
-        "dias_con_data": 18,
-        "flujo_total": 4590800.719999999,
-        "flujo_sadama": 769203.09,
-        "flujo_amadeus": 3821597.629999999,
+        "dias_con_data": 16,
+        "flujo_total": 68832473.04,
+        "flujo_sadama": 10319901.24,
+        "flujo_amadeus": 58512571.8,
         "bancos_total": 1098348.81,
         "inventario_total": 7018703.82,
         "cxc_total": 12129351.57,
@@ -1472,7 +1472,7 @@
         "banco_sadama": 77197.97,
         "inventarios_sadama": 441291.24,
         "inventarios_amadeus": 6577412.58,
-        "tc": 18.712777777777777,
+        "tc": 18.7175,
         "tc_min": 18.43,
         "tc_max": 19.57
       },
@@ -1480,9 +1480,9 @@
         "yyyymm": "2025-08",
         "fecha_cierre": "2025-08-29",
         "dias_con_data": 8,
-        "flujo_total": 4548339.77,
-        "flujo_sadama": 716874.23,
-        "flujo_amadeus": 3831465.54,
+        "flujo_total": 40953123.250000015,
+        "flujo_sadama": 6532299.34,
+        "flujo_amadeus": 34420823.910000004,
         "bancos_total": 1189583.1500000001,
         "inventario_total": 6985541.78,
         "cxc_total": 10433447.61,
@@ -1505,9 +1505,9 @@
         "yyyymm": "2025-09",
         "fecha_cierre": "2025-09-30",
         "dias_con_data": 10,
-        "flujo_total": 4882627.240000001,
-        "flujo_sadama": 600271.8099999999,
-        "flujo_amadeus": 4282355.430000002,
+        "flujo_total": 52517475.49,
+        "flujo_sadama": 6125683.709999999,
+        "flujo_amadeus": 46391791.779999994,
         "bancos_total": 1342266.71,
         "inventario_total": 6997212.52,
         "cxc_total": 11192991.25,
@@ -1529,10 +1529,10 @@
       {
         "yyyymm": "2025-10",
         "fecha_cierre": "2025-10-29",
-        "dias_con_data": 14,
-        "flujo_total": -4858504.590000001,
-        "flujo_sadama": 538684.88,
-        "flujo_amadeus": -5397189.470000001,
+        "dias_con_data": 13,
+        "flujo_total": 66914425.519999996,
+        "flujo_sadama": 8519348.750000002,
+        "flujo_amadeus": 58395076.77,
         "bancos_total": 1413177.35,
         "inventario_total": 1007008.7,
         "cxc_total": 674552.5,
@@ -1547,17 +1547,17 @@
         "banco_sadama": 179,
         "inventarios_sadama": 1007002.7,
         "inventarios_amadeus": 6,
-        "tc": 18.48071428571428,
+        "tc": 18.48384615384615,
         "tc_min": 18.21,
         "tc_max": 19.06
       },
       {
         "yyyymm": "2025-11",
         "fecha_cierre": "2025-11-18",
-        "dias_con_data": 9,
-        "flujo_total": 5221487.669999997,
-        "flujo_sadama": 769787.14,
-        "flujo_amadeus": 4451700.5299999975,
+        "dias_con_data": 8,
+        "flujo_total": 41929118.37,
+        "flujo_sadama": 5879217.96,
+        "flujo_amadeus": 36049900.41,
         "bancos_total": 1974966.2000000002,
         "inventario_total": 8091498.75,
         "cxc_total": 12231120.899999999,
@@ -1572,7 +1572,7 @@
         "banco_sadama": 221085.1,
         "inventarios_sadama": 942789.69,
         "inventarios_amadeus": 7148709.06,
-        "tc": 18.51111111111111,
+        "tc": 18.53375,
         "tc_min": 18.32,
         "tc_max": 18.91
       },
@@ -1580,9 +1580,9 @@
         "yyyymm": "2025-12",
         "fecha_cierre": "2025-12-08",
         "dias_con_data": 5,
-        "flujo_total": 4857331.019999999,
-        "flujo_sadama": 684240.79,
-        "flujo_amadeus": 4173090.2299999986,
+        "flujo_total": 23296112.87,
+        "flujo_sadama": 3191799.6500000004,
+        "flujo_amadeus": 20104313.22,
         "bancos_total": 1450066.91,
         "inventario_total": 6897633.64,
         "cxc_total": 11689793.38,
@@ -1604,10 +1604,10 @@
       {
         "yyyymm": "2026-01",
         "fecha_cierre": "2026-01-29",
-        "dias_con_data": 9,
-        "flujo_total": 3655396.33,
-        "flujo_sadama": 857231.1599999999,
-        "flujo_amadeus": 2798165.17,
+        "dias_con_data": 7,
+        "flujo_total": 23709006.999999993,
+        "flujo_sadama": 6413992.110000001,
+        "flujo_amadeus": 17295014.889999997,
         "bancos_total": 1120850.5,
         "inventario_total": 9968052.64,
         "cxc_total": 8053143.47,
@@ -1622,17 +1622,17 @@
         "banco_sadama": 117222.51,
         "inventarios_sadama": 1046581.96,
         "inventarios_amadeus": 8921470.68,
-        "tc": 17.461111111111112,
+        "tc": 17.484285714285715,
         "tc_min": 17.19,
         "tc_max": 18
       },
       {
         "yyyymm": "2026-02",
         "fecha_cierre": "2026-02-28",
-        "dias_con_data": 11,
-        "flujo_total": 3056074.1000000015,
-        "flujo_sadama": 830876.4000000001,
-        "flujo_amadeus": 2225197.700000001,
+        "dias_con_data": 10,
+        "flujo_total": 33228340.370000005,
+        "flujo_sadama": 8588877.63,
+        "flujo_amadeus": 24639462.740000002,
         "bancos_total": 723216.93,
         "inventario_total": 7499962.48,
         "cxc_total": 7236264.48,
@@ -1647,7 +1647,7 @@
         "banco_sadama": 91280.53,
         "inventarios_sadama": 1084982.36,
         "inventarios_amadeus": 6414980.12,
-        "tc": 17.213636363636365,
+        "tc": 17.213,
         "tc_min": 17.13,
         "tc_max": 17.31
       },
@@ -1655,9 +1655,9 @@
         "yyyymm": "2026-03",
         "fecha_cierre": "2026-03-31",
         "dias_con_data": 3,
-        "flujo_total": 3005296.5699999994,
-        "flujo_sadama": 499436.38000000006,
-        "flujo_amadeus": 2505860.1899999995,
+        "flujo_total": 9976707.528799996,
+        "flujo_sadama": 2313161.92,
+        "flujo_amadeus": 7663545.608799997,
         "bancos_total": 725356.7000000001,
         "inventario_total": 7420221.68,
         "cxc_total": 8168753.399999999,
@@ -1679,10 +1679,10 @@
       {
         "yyyymm": "2026-04",
         "fecha_cierre": "2026-04-30",
-        "dias_con_data": 8,
-        "flujo_total": 3490194.21,
-        "flujo_sadama": 938432.58,
-        "flujo_amadeus": 2551761.63,
+        "dias_con_data": 7,
+        "flujo_total": 25074433.9392,
+        "flujo_sadama": 5802476.33,
+        "flujo_amadeus": 19271957.609199997,
         "bancos_total": 581926.06,
         "inventario_total": 7308302.71,
         "cxc_total": 9328628.14,
@@ -1697,7 +1697,7 @@
         "banco_sadama": 32275.26,
         "inventarios_sadama": 629649.12,
         "inventarios_amadeus": 6678653.59,
-        "tc": 17.4725,
+        "tc": 17.482857142857142,
         "tc_min": 17.26,
         "tc_max": 17.85
       },
@@ -1705,23 +1705,23 @@
         "yyyymm": "2026-05",
         "fecha_cierre": "2026-05-01",
         "dias_con_data": 1,
-        "flujo_total": 3181827.86,
-        "flujo_sadama": 954998.57,
-        "flujo_amadeus": 2226829.29,
-        "bancos_total": 706316.58,
-        "inventario_total": 9896056.23,
-        "cxc_total": 8844432.370000001,
-        "cxp_total": 6368921.090000001,
-        "cxp_sandvik": 3778013.44,
-        "cxp_vargus": 1953027.13,
-        "cxp_mexicana": 179016.53,
-        "cxp_otros": 124363.99,
-        "bajio_usd_mxn": 283096.44,
-        "bajio_mxn": 61073,
-        "hsbc": 184247,
-        "banco_sadama": 177900.14,
-        "inventarios_sadama": 997705,
-        "inventarios_amadeus": 8898351.23,
+        "flujo_total": -5120436.32,
+        "flujo_sadama": 32275.26,
+        "flujo_amadeus": -5152711.58,
+        "bancos_total": 582986.0800000001,
+        "inventario_total": 0,
+        "cxc_total": 0,
+        "cxp_total": 5703422.4,
+        "cxp_sandvik": 3624393.66,
+        "cxp_vargus": 1905935.25,
+        "cxp_mexicana": 102254.58,
+        "cxp_otros": 70838.91,
+        "bajio_usd_mxn": 308465.82,
+        "bajio_mxn": 51771,
+        "hsbc": 190474,
+        "banco_sadama": 32275.26,
+        "inventarios_sadama": 0,
+        "inventarios_amadeus": 0,
         "tc": 17.46,
         "tc_min": 17.46,
         "tc_max": 17.46
