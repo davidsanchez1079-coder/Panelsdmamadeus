@@ -52,7 +52,7 @@ import { DashboardChartFilters } from '@/components/executive/DashboardChartFilt
 import { ExecutiveSwitch, type ExecutiveMode } from '@/components/executive/ExecutiveSwitch';
 import { ThemeToggle } from '@/components/executive/ThemeToggle';
 import { HeroFlujoBanner } from '@/components/executive/HeroFlujoBanner';
-import { ExecKPICard } from '@/components/executive/ExecKPICard';
+import { ExecKPICard, type SparkTriplePoint } from '@/components/executive/ExecKPICard';
 import { AlertsBanner } from '@/components/executive/AlertsBanner';
 import { ChartDataTable } from '@/components/executive/ChartDataTable';
 
@@ -65,15 +65,30 @@ const KPI_ORDER = [
 
 type KpiSparkKey = (typeof KPI_ORDER)[number]['key'];
 
+const KPI_SPARK_MAP: Record<KpiSparkKey, { s: keyof ChartRow; a: keyof ChartRow; t: keyof ChartRow }> = {
+  bancos_total: { s: 'bancos_sadama', a: 'bancos_amadeus', t: 'bancos_total' },
+  inventario_total: { s: 'inventario_sadama', a: 'inventario_amadeus', t: 'inventario_total' },
+  cxc_total: { s: 'cxc_sadama', a: 'cxc_amadeus', t: 'cxc_total' },
+  cxp_total: { s: 'cxp_sadama', a: 'cxp_amadeus', t: 'cxp_total' },
+};
+
 function pickYoY(yoy: Record<string, YoYDelta> | null | undefined, kpiKey: string) {
   const d = yoy?.[kpiKey];
   return d && typeof d === 'object' ? d : null;
 }
 
-function buildSparkFromChartRows(rows: ChartRow[], kpiKey: KpiSparkKey) {
+function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
+  const v = r[k];
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+function buildSparkTripleFromChartRows(rows: ChartRow[], kpiKey: KpiSparkKey): SparkTriplePoint[] {
+  const m = KPI_SPARK_MAP[kpiKey];
   return rows.map((r) => ({
     x: r.bucketEnd,
-    y: typeof r[kpiKey] === 'number' ? r[kpiKey] : 0,
+    sadama: numFromChartRow(r, m.s),
+    amadeus: numFromChartRow(r, m.a),
+    total: numFromChartRow(r, m.t),
   }));
 }
 
@@ -505,7 +520,7 @@ export function ExecutiveClient({
           const fromSeries = lastBucket && typeof lastBucket[key] === 'number' ? (lastBucket[key] as number) : null;
           const value = fromSeries ?? fallback;
           const deltaPct = pickYoY(yoy, key)?.delta_pct ?? null;
-          const sparkline = buildSparkFromChartRows(chartRows, key);
+          const sparkTriple = buildSparkTripleFromChartRows(chartRows, key);
           return (
             <ExecKPICard
               key={key}
@@ -513,7 +528,7 @@ export function ExecutiveClient({
               kpiKey={key}
               value={value}
               deltaPct={deltaPct}
-              sparkline={sparkline}
+              sparkTriple={sparkTriple}
               href={`/?kpi=${key}`}
               showChart={mounted}
             />

@@ -1,35 +1,51 @@
 'use client';
 
 import Link from 'next/link';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { formatChartDayNumeric } from '@/lib/dateDisplay';
 import { formatMXN } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { YoYBadge } from './YoYBadge';
 
-type SparkPoint = { x: string; y: number };
+export type SparkTriplePoint = { x: string; sadama: number; amadeus: number; total: number };
 
-const SPARK_THEME: Record<string, { stroke: string; fill: string }> = {
-  bancos_total: { stroke: 'var(--chart-spark-bancos-stroke)', fill: 'var(--chart-spark-bancos-fill)' },
-  inventario_total: { stroke: 'var(--chart-spark-inventario-stroke)', fill: 'var(--chart-spark-inventario-fill)' },
-  cxc_total: { stroke: 'var(--chart-spark-cxc-stroke)', fill: 'var(--chart-spark-cxc-fill)' },
-  cxp_total: { stroke: 'var(--chart-spark-cxp-stroke)', fill: 'var(--chart-spark-cxp-fill)' },
+const SPARK_THEME: Record<string, { totalStroke: string }> = {
+  bancos_total: { totalStroke: 'var(--chart-spark-bancos-stroke)' },
+  inventario_total: { totalStroke: 'var(--chart-spark-inventario-stroke)' },
+  cxc_total: { totalStroke: 'var(--chart-spark-cxc-stroke)' },
+  cxp_total: { totalStroke: 'var(--chart-spark-cxp-stroke)' },
 };
+
+const STROKE_SADAMA = 'var(--chart-line-flujo-sadama)';
+const STROKE_AMADEUS = 'var(--chart-line-flujo-amadeus)';
 
 type SparkTipProps = {
   active?: boolean;
-  payload?: ReadonlyArray<{ payload?: unknown }>;
+  payload?: ReadonlyArray<{
+    name?: string;
+    value?: unknown;
+    dataKey?: unknown;
+    payload?: SparkTriplePoint;
+  }>;
 };
 
 function SparkTooltip({ active, payload }: SparkTipProps) {
   if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload as SparkPoint | undefined;
+  const row = payload[0]?.payload as SparkTriplePoint | undefined;
   if (!row?.x) return null;
+  const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
   return (
-    <div className="pointer-events-none z-50 rounded-md border border-zinc-400 bg-zinc-50 px-2 py-1.5 text-left shadow-lg dark:border-zinc-500 dark:bg-zinc-900">
+    <div className="pointer-events-none z-50 max-w-[200px] rounded-md border border-zinc-400 bg-zinc-50 px-2 py-1.5 text-left shadow-lg dark:border-zinc-500 dark:bg-zinc-900">
       <div className="text-[10px] font-semibold text-zinc-900 dark:text-zinc-50">{formatChartDayNumeric(row.x)}</div>
-      <div className="text-[11px] tabular-nums text-zinc-800 dark:text-zinc-200">{formatMXN(row.y)}</div>
+      <ul className="mt-1 space-y-0.5">
+        {items.map((p) => (
+          <li key={String(p.dataKey)} className="flex justify-between gap-3 text-[11px] tabular-nums text-zinc-800 dark:text-zinc-200">
+            <span>{p.name}</span>
+            <span>{formatMXN(p.value as number)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -39,7 +55,7 @@ export function ExecKPICard({
   kpiKey,
   value,
   deltaPct,
-  sparkline,
+  sparkTriple,
   href,
   showChart = true,
 }: {
@@ -47,12 +63,12 @@ export function ExecKPICard({
   kpiKey: string;
   value: number | null | undefined;
   deltaPct: number | null | undefined;
-  sparkline: SparkPoint[];
+  sparkTriple: SparkTriplePoint[];
   href: string;
   showChart?: boolean;
 }) {
-  const first = sparkline[0];
-  const last = sparkline[sparkline.length - 1];
+  const first = sparkTriple[0];
+  const last = sparkTriple[sparkTriple.length - 1];
   const rangeLabel =
     first && last
       ? first.x === last.x
@@ -60,15 +76,13 @@ export function ExecKPICard({
         : `${formatChartDayNumeric(first.x)} → ${formatChartDayNumeric(last.x)}`
       : null;
 
-  const sparkStyle = SPARK_THEME[kpiKey] ?? {
-    stroke: 'var(--chart-line-flujo)',
-    fill: 'var(--chart-spark-fill)',
-  };
+  const sparkStyle = SPARK_THEME[kpiKey] ?? { totalStroke: 'var(--chart-line-flujo)' };
 
-  const minY = sparkline.length ? Math.min(...sparkline.map((p) => p.y)) : 0;
-  const maxY = sparkline.length ? Math.max(...sparkline.map((p) => p.y)) : 0;
+  const allY = sparkTriple.flatMap((p) => [p.sadama, p.amadeus, p.total]);
+  const minY = allY.length ? Math.min(...allY) : 0;
+  const maxY = allY.length ? Math.max(...allY) : 0;
   const scaleHint =
-    sparkline.length > 1 && Number.isFinite(minY) && Number.isFinite(maxY) && minY !== maxY ? (
+    sparkTriple.length > 1 && Number.isFinite(minY) && Number.isFinite(maxY) && minY !== maxY ? (
       <div className="flex justify-between gap-1 text-[10px] tabular-nums text-zinc-500 dark:text-zinc-400">
         <span>mín. {formatMXN(minY)}</span>
         <span>máx. {formatMXN(maxY)}</span>
@@ -91,28 +105,48 @@ export function ExecKPICard({
         <YoYBadge kpiKey={kpiKey} deltaPct={deltaPct} className="shrink-0" />
       </div>
 
-      <div className="chart-root mt-2 h-[72px] w-full min-w-0 text-foreground">
-        {showChart && sparkline.length > 0 ? (
+      <div className="chart-root mt-2 h-[88px] w-full min-w-0 text-foreground">
+        {showChart && sparkTriple.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparkline} margin={{ top: 2, right: 2, left: 0, bottom: 0 }}>
+            <LineChart data={sparkTriple} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
               <XAxis dataKey="x" type="category" hide />
               <YAxis hide domain={['auto', 'auto']} />
               <Tooltip content={<SparkTooltip />} cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }} />
-              <Area
+              <Legend
+                verticalAlign="bottom"
+                height={22}
+                iconType="line"
+                wrapperStyle={{ fontSize: 9, paddingTop: 2 }}
+                formatter={(value) => <span className="text-zinc-600 dark:text-zinc-400">{value}</span>}
+              />
+              <Line
                 type="monotone"
-                dataKey="y"
-                stroke={sparkStyle.stroke}
-                fill={sparkStyle.fill}
-                strokeWidth={2}
-                activeDot={{
-                  r: 4,
-                  fill: sparkStyle.stroke,
-                  stroke: 'var(--color-background)',
-                  strokeWidth: 2,
-                }}
+                dataKey="sadama"
+                name="Sadama"
+                stroke={STROKE_SADAMA}
+                strokeWidth={1.75}
+                dot={false}
                 isAnimationActive={false}
               />
-            </AreaChart>
+              <Line
+                type="monotone"
+                dataKey="amadeus"
+                name="Amadeus"
+                stroke={STROKE_AMADEUS}
+                strokeWidth={1.75}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="total"
+                name="Total"
+                stroke={sparkStyle.totalStroke}
+                strokeWidth={2.25}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
           </ResponsiveContainer>
         ) : showChart ? (
           <div className="flex h-full items-center justify-center rounded-md bg-zinc-100 text-[10px] text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
@@ -131,7 +165,7 @@ export function ExecKPICard({
       {scaleHint}
 
       <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Pasa el cursor sobre la línea para ver fecha y monto · Click para detalle
+        Tres líneas: Sadama, Amadeus y total · Pasa el cursor para ver montos · Click para detalle
       </div>
     </Link>
   );
