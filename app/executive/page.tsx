@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { parse } from 'date-fns';
+import { isValid, parse } from 'date-fns';
 
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
+import { getExecutiveUiBuildStamp } from '@/lib/buildStamp';
 import { buildFlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
 import { formatCierreLabel } from '@/lib/dateDisplay';
 import type { ExecutiveData } from '@/lib/executive';
@@ -11,6 +12,11 @@ import { loadExecutive } from '@/lib/loadExecutive';
 import { rebuildExecutiveFromDatosRows } from '@/lib/rebuildExecutiveFromDatos';
 import { loadPanelV1 } from '@/lib/panelV1';
 import type { DatosRow } from '@/lib/types';
+import {
+  aggregateFacturacionPorMesCalendario,
+  parseAsOfDay,
+  ytdFacturacionResumen,
+} from '@/lib/facturacionMonthly';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +49,20 @@ export default async function ExecutivePage() {
   const view = getExecutiveViewModel(dataForView, asOf);
   const dailyFlujo = buildFlujoDailyComparativoBundle(v1.datos.rows, asOf);
   const dailyKpisSeries = buildDailyKpisSeries(v1.datos.rows, asOfDay);
+  const monthlyFactHero = aggregateFacturacionPorMesCalendario(dailyKpisSeries, asOfDay, 'amadeus');
+  let heroFacturacionYtd = ytdFacturacionResumen(monthlyFactHero, asOfDay);
+  if (!heroFacturacionYtd) {
+    const d = parseAsOfDay(asOfDay);
+    if (isValid(d)) {
+      heroFacturacionYtd = {
+        ytdActual: 0,
+        ytdAnterior: 0,
+        yearActual: String(d.getFullYear()),
+        yearAnterior: String(d.getFullYear() - 1),
+      };
+    }
+  }
+  const buildStamp = getExecutiveUiBuildStamp();
   const cierre = view.lastMonth.fecha_cierre;
   const cierreLabel = formatCierreLabel(cierre, view.lastMonth.yyyymm);
 
@@ -54,7 +74,12 @@ export default async function ExecutivePage() {
             <div className="truncate bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-sm font-semibold text-transparent dark:from-sky-200 dark:via-white dark:to-sky-300">
               Dashboard Ejecutivo
             </div>
-            <div className="truncate text-xs text-zinc-500 dark:text-sky-200/70">Cierre: {cierreLabel}</div>
+            <div className="truncate text-xs text-zinc-500 dark:text-sky-200/70">
+              Cierre: {cierreLabel}
+              <span className="ml-2 font-mono text-[10px] text-zinc-400 dark:text-zinc-500" title="Commit del build (Vercel). Si no coincide con el último push, limpie caché o redeploy.">
+                · build {buildStamp}
+              </span>
+            </div>
           </div>
           <Link
             href="/captura"
@@ -71,6 +96,7 @@ export default async function ExecutivePage() {
         dailyFlujo={dailyFlujo}
         dailyKpisSeries={dailyKpisSeries}
         asOfDay={asOfDay}
+        heroFacturacionYtd={heroFacturacionYtd ?? undefined}
       />
     </main>
   );

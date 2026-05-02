@@ -209,12 +209,20 @@ export function ExecutiveClient({
   dailyFlujo,
   dailyKpisSeries,
   asOfDay,
+  heroFacturacionYtd: heroFacturacionYtdServer,
 }: {
   meta: JsonMeta;
   view: ExecutiveViewModel;
   dailyFlujo: FlujoDailyComparativoBundle;
   dailyKpisSeries: DailyKpiPoint[];
   asOfDay: string;
+  /** Precomputado en el servidor (misma lógica que los gráficos de facturación). */
+  heroFacturacionYtd?: {
+    ytdActual: number;
+    ytdAnterior: number;
+    yearActual: string;
+    yearAnterior: string;
+  };
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<ExecutiveMode>('ytd');
@@ -337,8 +345,9 @@ export function ExecutiveClient({
     return { actual: String(y), anterior: String(y - 1) };
   }, [asOfDay]);
 
-  /** Misma lógica que el gráfico YTD; si la fecha es válida, siempre hay resumen (evita fallback al YoY de flujo ~55M). */
+  /** Misma lógica que el gráfico YTD; prioriza valor del servidor; si la fecha es válida, siempre hay resumen (evita fallback al YoY de flujo ~55M). */
   const resumenYtdFacturacion = useMemo(() => {
+    if (heroFacturacionYtdServer != null) return heroFacturacionYtdServer;
     const r = ytdFacturacionResumen(monthlyFact, asOfDay);
     if (r) return r;
     const d = parseAsOfDay(asOfDay);
@@ -349,7 +358,7 @@ export function ExecutiveClient({
       yearActual: String(d.getFullYear()),
       yearAnterior: String(d.getFullYear() - 1),
     };
-  }, [monthlyFact, asOfDay]);
+  }, [heroFacturacionYtdServer, monthlyFact, asOfDay]);
 
   const mesCorteNombre = useMemo(() => format(parseISO(asOfDay), 'MMMM', { locale: es }), [asOfDay]);
 
