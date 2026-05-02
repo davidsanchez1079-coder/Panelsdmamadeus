@@ -4,10 +4,13 @@ import { parse } from 'date-fns';
 import { buildDailyKpisSeries } from '@/lib/buildDailyKpisSeries';
 import { buildFlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
 import { formatCierreLabel } from '@/lib/dateDisplay';
+import type { ExecutiveData } from '@/lib/executive';
 import { getExecutiveViewModel } from '@/lib/executive';
 import { resolveExecutiveAsOfDay } from '@/lib/executiveAsOf';
 import { loadExecutive } from '@/lib/loadExecutive';
+import { rebuildExecutiveFromDatosRows } from '@/lib/rebuildExecutiveFromDatos';
 import { loadPanelV1 } from '@/lib/panelV1';
+import type { DatosRow } from '@/lib/types';
 import { ExecutiveClient } from './ui/ExecutiveClient';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +19,27 @@ export default async function ExecutivePage() {
   const [data, v1] = await Promise.all([loadExecutive(), loadPanelV1()]);
   const asOfDay = resolveExecutiveAsOfDay(v1.datos.rows);
   const asOf = parse(asOfDay, 'yyyy-MM-dd', new Date());
-  const view = getExecutiveViewModel(data, asOf);
+
+  const rowsThroughAsOf = (v1.datos.rows as DatosRow[]).filter(
+    (r) => typeof r.fecha === 'string' && r.fecha <= asOfDay,
+  );
+
+  let dataForView: ExecutiveData = data;
+  try {
+    if (rowsThroughAsOf.length > 0) {
+      const rebuilt = rebuildExecutiveFromDatosRows(rowsThroughAsOf);
+      dataForView = {
+        ...data,
+        monthly: rebuilt.monthly,
+        yoy_months: rebuilt.yoy_months,
+        executive: rebuilt.executive,
+      };
+    }
+  } catch {
+    /* Sin meses agregables o datos incompletos: se usa el JSON ejecutivo en disco. */
+  }
+
+  const view = getExecutiveViewModel(dataForView, asOf);
   const dailyFlujo = buildFlujoDailyComparativoBundle(v1.datos.rows, asOf);
   const dailyKpisSeries = buildDailyKpisSeries(v1.datos.rows, asOfDay);
   const cierre = view.lastMonth.fecha_cierre;
