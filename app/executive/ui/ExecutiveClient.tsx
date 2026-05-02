@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { format, parseISO, subDays } from 'date-fns';
+import { format, isValid, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import type { FlujoDailyComparativoBundle } from '@/lib/dailyFlujoComparativo';
@@ -20,6 +20,7 @@ import { cxpProveedoresConPct } from '@/lib/cxpDonutFromDaily';
 import {
   aggregateFacturacionPorMesCalendario,
   mesActualVsMesAnteriorCalendario,
+  parseAsOfDay,
   ytdComparativaAnioVsAnioAnterior,
   ytdFacturacionResumen,
 } from '@/lib/facturacionMonthly';
@@ -336,8 +337,19 @@ export function ExecutiveClient({
     return { actual: String(y), anterior: String(y - 1) };
   }, [asOfDay]);
 
-  /** Misma lógica que el gráfico YTD; parse de fecha reforzado para que el hero no quede sin datos. */
-  const resumenYtdFacturacion = useMemo(() => ytdFacturacionResumen(monthlyFact, asOfDay), [monthlyFact, asOfDay]);
+  /** Misma lógica que el gráfico YTD; si la fecha es válida, siempre hay resumen (evita fallback al YoY de flujo ~55M). */
+  const resumenYtdFacturacion = useMemo(() => {
+    const r = ytdFacturacionResumen(monthlyFact, asOfDay);
+    if (r) return r;
+    const d = parseAsOfDay(asOfDay);
+    if (!isValid(d)) return null;
+    return {
+      ytdActual: 0,
+      ytdAnterior: 0,
+      yearActual: String(d.getFullYear()),
+      yearAnterior: String(d.getFullYear() - 1),
+    };
+  }, [monthlyFact, asOfDay]);
 
   const mesCorteNombre = useMemo(() => format(parseISO(asOfDay), 'MMMM', { locale: es }), [asOfDay]);
 
@@ -411,6 +423,7 @@ export function ExecutiveClient({
           daily={dailyFlujo.total}
           className="min-h-[140px]"
           facturacionYtd={resumenYtdFacturacion ?? undefined}
+          hideFlujoYoyWhenNoFacturacion
         />
         <HeroFlujoBanner
           title="Flujo Sadama"

@@ -27,7 +27,7 @@ export type FacturacionMesRow = {
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 /** `parseISO` a veces falla con strings locales; se refuerza con `parse` ISO. */
-function parseAsOfDay(asOfDay: string): Date {
+export function parseAsOfDay(asOfDay: string): Date {
   const a = parseISO(asOfDay);
   if (isValid(a)) return a;
   const b = parse(asOfDay, 'yyyy-MM-dd', new Date());

@@ -36,6 +36,7 @@ export function HeroFlujoBanner({
   className,
   yoyExplainFooter,
   facturacionYtd,
+  hideFlujoYoyWhenNoFacturacion,
 }: {
   title: string;
   yoyKpiKey: HeroFlujoYoyKey;
@@ -57,6 +58,11 @@ export function HeroFlujoBanner({
     yearActual: string;
     yearAnterior: string;
   };
+  /**
+   * Si true y no hay `facturacionYtd`, no mostrar el YoY de flujo (p. ej. ~55M histórico);
+   * útil en la tarjeta «Flujo total» donde el equipo quiere solo el YTD de facturación.
+   */
+  hideFlujoYoyWhenNoFacturacion?: boolean;
 }) {
   const polarity = getPolarity(yoyKpiKey);
   const facturacionDeltaPct =
@@ -215,6 +221,11 @@ export function HeroFlujoBanner({
                   />
                 </div>
               </div>
+            ) : hideFlujoYoyWhenNoFacturacion ? (
+              <p className="text-xs leading-snug text-amber-800 dark:text-amber-200/90">
+                YTD facturación Amadeus no disponible para esta fecha de corte. Pulse Actualizar o revise los datos
+                capturados.
+              </p>
             ) : (
               <>
                 <div className="flex flex-wrap items-center gap-2">
