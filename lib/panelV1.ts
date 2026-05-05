@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bundledPanelSeed';
-import { loadPanelStateFromDb } from './panelState';
+import { tryLoadPanelStateFromDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 
 export type PanelV1Datos = {
@@ -17,7 +17,7 @@ const V1_JSON = path.join(process.cwd(), 'data', 'sadama_amadeus_v1.json');
 
 export async function loadPanelV1(): Promise<PanelV1File> {
   if (isSupabasePersistenceConfigured()) {
-    const row = await loadPanelStateFromDb();
+    const row = await tryLoadPanelStateFromDb();
     if (row?.v1_json) return row.v1_json as unknown as PanelV1File;
     const { v1 } = await loadBundledV1AndExecutive();
     return v1 as unknown as PanelV1File;

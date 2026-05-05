@@ -5,7 +5,7 @@ import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bund
 import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
-import { loadPanelStateFromDb, upsertPanelStateToDb } from './panelState';
+import { tryLoadPanelStateFromDb, upsertPanelStateToDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 import type { DatosRow, SadamaAmadeusV1 } from './types';
 
@@ -39,7 +39,7 @@ function updateDatosMeta(datos: SadamaAmadeusV1['datos']) {
 
 async function loadBaselineV1AndExec(): Promise<{ v1: SadamaAmadeusV1; execExisting: ExecutiveData }> {
   if (isSupabasePersistenceConfigured()) {
-    const row = await loadPanelStateFromDb();
+    const row = await tryLoadPanelStateFromDb();
     if (row?.v1_json && row?.executive_json) {
       return {
         v1: structuredClone(row.v1_json as SadamaAmadeusV1),

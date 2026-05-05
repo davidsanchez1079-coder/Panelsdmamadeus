@@ -3,14 +3,14 @@ import path from 'path';
 
 import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bundledPanelSeed';
 import type { ExecutiveData } from './executive';
-import { loadPanelStateFromDb } from './panelState';
+import { tryLoadPanelStateFromDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 
 const EXEC_JSON = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.json');
 
 export async function loadExecutive(): Promise<ExecutiveData> {
   if (isSupabasePersistenceConfigured()) {
-    const row = await loadPanelStateFromDb();
+    const row = await tryLoadPanelStateFromDb();
     if (row?.executive_json) return row.executive_json as ExecutiveData;
     const { executive } = await loadBundledV1AndExecutive();
     return executive;

@@ -25,6 +25,16 @@ export async function loadPanelStateFromDb(): Promise<PanelStateRow | null> {
   return data as unknown as PanelStateRow;
 }
 
+/** Lectura tolerante a fallos: si Supabase falla, devuelve null (la app puede usar JSON empaquetado). */
+export async function tryLoadPanelStateFromDb(): Promise<PanelStateRow | null> {
+  try {
+    return await loadPanelStateFromDb();
+  } catch (e) {
+    console.error('[panelsdm] No se pudo cargar estado desde Supabase:', formatErrorMessage(e));
+    return null;
+  }
+}
+
 export async function upsertPanelStateToDb(v1: SadamaAmadeusV1, executive: ExecutiveData) {
   const supabase = getSupabaseAdmin();
   const payload = {
