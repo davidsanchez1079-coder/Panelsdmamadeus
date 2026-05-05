@@ -140,10 +140,13 @@ function cloneMontosSnapshot(sadama: SadamaForm, amadeus: AmadeusForm): { sadama
 
 function sadamaH(
   baseline: { sadama: SadamaForm; amadeus: AmadeusForm } | null,
+  touched: Set<string>,
   sadama: SadamaForm,
   key: keyof SadamaForm,
 ): 'copied' | 'modified' | null {
   if (!baseline) return null;
+  const path = `sadama.${String(key)}`;
+  if (touched.has(path)) return 'modified';
   return sadama[key] === baseline.sadama[key] ? 'copied' : 'modified';
 }
 
@@ -151,15 +154,19 @@ type AmadeusScalarKey = Exclude<keyof AmadeusForm, 'otros_lineas'>;
 
 function amadeusScalarH(
   baseline: { sadama: SadamaForm; amadeus: AmadeusForm } | null,
+  touched: Set<string>,
   amadeus: AmadeusForm,
   key: AmadeusScalarKey,
 ): 'copied' | 'modified' | null {
   if (!baseline) return null;
+  const path = `amadeus.${String(key)}`;
+  if (touched.has(path)) return 'modified';
   return amadeus[key] === baseline.amadeus[key] ? 'copied' : 'modified';
 }
 
 function otrosH(
   baseline: { sadama: SadamaForm; amadeus: AmadeusForm } | null,
+  touched: Set<string>,
   amadeus: AmadeusForm,
   index: number,
   part: 'monto' | 'proveedor',
@@ -167,6 +174,8 @@ function otrosH(
   if (!baseline) return null;
   const c = amadeus.otros_lineas[index]![part];
   const b = baseline.amadeus.otros_lineas[index]![part];
+  const path = `amadeus.otros_lineas.${index}.${part}`;
+  if (touched.has(path)) return 'modified';
   return c === b ? 'copied' : 'modified';
 }
 
@@ -191,8 +200,24 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   const [montosCopyBaseline, setMontosCopyBaseline] = useState<{ sadama: SadamaForm; amadeus: AmadeusForm } | null>(
     null,
   );
+  /** Campos tocados desde que se copió el día anterior (aunque vuelvan al mismo valor). */
+  const [montosTouched, setMontosTouched] = useState<Set<string>>(() => new Set());
   const copyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markTouched = (path: string) => {
+    setMontosTouched((prev) => {
+      if (prev.has(path)) return prev;
+      const next = new Set(prev);
+      next.add(path);
+      return next;
+    });
+  };
+
+  const resetCopyContext = () => {
+    setMontosCopyBaseline(null);
+    setMontosTouched(new Set());
+  };
 
   const nextRow = useMemo(() => nextDatosRowNumber(initialRows), [initialRows]);
 
@@ -289,7 +314,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   const onLimpiarMontos = () => {
     setSadama(emptySadama);
     setAmadeus(emptyAmadeus);
-    setMontosCopyBaseline(null);
+    resetCopyContext();
   };
 
   const onCopiarDatosAnteriores = () => {
@@ -298,6 +323,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     setSadama(s.sadama);
     setAmadeus(s.amadeus);
     setMontosCopyBaseline(cloneMontosSnapshot(s.sadama, s.amadeus));
+    setMontosTouched(new Set());
     setCopiedPreviousLabel(s.fecha);
     if (previousCopyTimerRef.current) clearTimeout(previousCopyTimerRef.current);
     previousCopyTimerRef.current = setTimeout(() => setCopiedPreviousLabel(null), 2500);
@@ -313,7 +339,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     setTc(s != null ? amountToInputString(s) : '');
     setSadama(emptySadama);
     setAmadeus(emptyAmadeus);
-    setMontosCopyBaseline(null);
+    resetCopyContext();
   };
 
   const onEditar = (row: DatosRow) => {
@@ -325,7 +351,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     setTc(s.tc);
     setSadama(s.sadama);
     setAmadeus(s.amadeus);
-    setMontosCopyBaseline(null);
+    resetCopyContext();
   };
 
   const onGuardar = async () => {
@@ -358,7 +384,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
       }
       if (data.analysis) setPostSaveAnalysis(data.analysis);
       setEditingOriginalFecha(null);
-      setMontosCopyBaseline(null);
+      resetCopyContext();
       router.refresh();
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -406,9 +432,9 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
           <span className="font-semibold">Referencia de colores (tras copiar día anterior):</span> fondo{' '}
           <span className="rounded border border-amber-500 bg-amber-50 px-1 dark:bg-amber-950/50">ámbar</span> = aún igual
-          que lo copiado; fondo{' '}
+          y sin tocar desde la copia; fondo{' '}
           <span className="rounded border border-sky-500 bg-sky-50 px-1 dark:bg-sky-950/50">azul cielo</span> = campo que
-          ya modificaste. Fecha y TC no se colorean (no forman parte de esa copia).
+          ya tocaste/editaste (aunque vuelva al mismo monto). Fecha y TC no se colorean (no forman parte de esa copia).
         </p>
       ) : null}
 
@@ -422,36 +448,51 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               id="s-banco"
               label="Banco"
               value={sadama.banco}
-              highlight={sadamaH(montosCopyBaseline, sadama, 'banco')}
-              onChange={(v) => setSadama((p) => ({ ...p, banco: v }))}
+              highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'banco')}
+              onChange={(v) => {
+                markTouched('sadama.banco');
+                setSadama((p) => ({ ...p, banco: v }));
+              }}
             />
             <NumField
               id="s-inv"
               label="Inventarios"
               value={sadama.inventarios}
-              highlight={sadamaH(montosCopyBaseline, sadama, 'inventarios')}
-              onChange={(v) => setSadama((p) => ({ ...p, inventarios: v }))}
+              highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'inventarios')}
+              onChange={(v) => {
+                markTouched('sadama.inventarios');
+                setSadama((p) => ({ ...p, inventarios: v }));
+              }}
             />
             <NumField
               id="s-cxc"
               label="CXC"
               value={sadama.cxc}
-              highlight={sadamaH(montosCopyBaseline, sadama, 'cxc')}
-              onChange={(v) => setSadama((p) => ({ ...p, cxc: v }))}
+              highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxc')}
+              onChange={(v) => {
+                markTouched('sadama.cxc');
+                setSadama((p) => ({ ...p, cxc: v }));
+              }}
             />
             <NumField
               id="s-cxp"
               label="CXP (Sadama)"
               value={sadama.cxp}
-              highlight={sadamaH(montosCopyBaseline, sadama, 'cxp')}
-              onChange={(v) => setSadama((p) => ({ ...p, cxp: v }))}
+              highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxp')}
+              onChange={(v) => {
+                markTouched('sadama.cxp');
+                setSadama((p) => ({ ...p, cxp: v }));
+              }}
             />
             <NumField
               id="s-fact"
               label="Fact. día mes"
               value={sadama.fact_dia_mes}
-              highlight={sadamaH(montosCopyBaseline, sadama, 'fact_dia_mes')}
-              onChange={(v) => setSadama((p) => ({ ...p, fact_dia_mes: v }))}
+              highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'fact_dia_mes')}
+              onChange={(v) => {
+                markTouched('sadama.fact_dia_mes');
+                setSadama((p) => ({ ...p, fact_dia_mes: v }));
+              }}
             />
           </div>
         </section>
@@ -465,29 +506,41 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               id="a-inv"
               label="Inventarios"
               value={amadeus.inventarios}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'inventarios')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, inventarios: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'inventarios')}
+              onChange={(v) => {
+                markTouched('amadeus.inventarios');
+                setAmadeus((p) => ({ ...p, inventarios: v }));
+              }}
             />
             <NumField
               id="a-cxc"
               label="CXC"
               value={amadeus.cxc}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'cxc')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, cxc: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'cxc')}
+              onChange={(v) => {
+                markTouched('amadeus.cxc');
+                setAmadeus((p) => ({ ...p, cxc: v }));
+              }}
             />
             <NumField
               id="a-fact"
               label="Fact. día / mes"
               value={amadeus.fact_dia_mes}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'fact_dia_mes')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, fact_dia_mes: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'fact_dia_mes')}
+              onChange={(v) => {
+                markTouched('amadeus.fact_dia_mes');
+                setAmadeus((p) => ({ ...p, fact_dia_mes: v }));
+              }}
             />
             <NumField
               id="a-comp"
               label="Compras mes"
               value={amadeus.compras_mes}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'compras_mes')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, compras_mes: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'compras_mes')}
+              onChange={(v) => {
+                markTouched('amadeus.compras_mes');
+                setAmadeus((p) => ({ ...p, compras_mes: v }));
+              }}
             />
           </div>
           <p className="mb-2 mt-4 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
@@ -498,29 +551,41 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               id="a-sand"
               label="Sandvik"
               value={amadeus.sandvik}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'sandvik')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, sandvik: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'sandvik')}
+              onChange={(v) => {
+                markTouched('amadeus.sandvik');
+                setAmadeus((p) => ({ ...p, sandvik: v }));
+              }}
             />
             <NumField
               id="a-varg"
               label="Vargus"
               value={amadeus.vargus}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'vargus')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, vargus: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'vargus')}
+              onChange={(v) => {
+                markTouched('amadeus.vargus');
+                setAmadeus((p) => ({ ...p, vargus: v }));
+              }}
             />
             <NumField
               id="a-mex"
               label="Mexicana"
               value={amadeus.mexicana}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'mexicana')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, mexicana: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'mexicana')}
+              onChange={(v) => {
+                markTouched('amadeus.mexicana');
+                setAmadeus((p) => ({ ...p, mexicana: v }));
+              }}
             />
             <NumField
               id="a-sadama-cxp-line"
               label="Sadama"
               value={amadeus.probadores_sadama}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'probadores_sadama')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, probadores_sadama: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'probadores_sadama')}
+              onChange={(v) => {
+                markTouched('amadeus.probadores_sadama');
+                setAmadeus((p) => ({ ...p, probadores_sadama: v }));
+              }}
             />
           </div>
           <p className="mb-2 mt-3 text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -533,25 +598,27 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                   id={`a-otr-${i}-monto`}
                   label={`Otros ${i + 1} · monto`}
                   value={amadeus.otros_lineas[i]!.monto}
-                  highlight={otrosH(montosCopyBaseline, amadeus, i, 'monto')}
-                  onChange={(v) =>
+                  highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'monto')}
+                  onChange={(v) => {
+                    markTouched(`amadeus.otros_lineas.${i}.monto`);
                     setAmadeus((p) => ({
                       ...p,
                       otros_lineas: p.otros_lineas.map((line, j) => (j === i ? { ...line, monto: v } : line)),
-                    }))
-                  }
+                    }));
+                  }}
                 />
                 <TextField
                   id={`a-otr-${i}-prov`}
                   label={`Otros ${i + 1} · proveedor`}
                   value={amadeus.otros_lineas[i]!.proveedor}
-                  highlight={otrosH(montosCopyBaseline, amadeus, i, 'proveedor')}
-                  onChange={(v) =>
+                  highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'proveedor')}
+                  onChange={(v) => {
+                    markTouched(`amadeus.otros_lineas.${i}.proveedor`);
                     setAmadeus((p) => ({
                       ...p,
                       otros_lineas: p.otros_lineas.map((line, j) => (j === i ? { ...line, proveedor: v } : line)),
-                    }))
-                  }
+                    }));
+                  }}
                 />
               </div>
             ))}
@@ -562,22 +629,31 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               id="a-usd"
               label="Bajío USD"
               value={amadeus.bajio_usd}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'bajio_usd')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, bajio_usd: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_usd')}
+              onChange={(v) => {
+                markTouched('amadeus.bajio_usd');
+                setAmadeus((p) => ({ ...p, bajio_usd: v }));
+              }}
             />
             <NumField
               id="a-mxn"
               label="Bajío MXN"
               value={amadeus.bajio_mxn}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'bajio_mxn')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, bajio_mxn: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_mxn')}
+              onChange={(v) => {
+                markTouched('amadeus.bajio_mxn');
+                setAmadeus((p) => ({ ...p, bajio_mxn: v }));
+              }}
             />
             <NumField
               id="a-hsbc"
               label="HSBC"
               value={amadeus.hsbc}
-              highlight={amadeusScalarH(montosCopyBaseline, amadeus, 'hsbc')}
-              onChange={(v) => setAmadeus((p) => ({ ...p, hsbc: v }))}
+              highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'hsbc')}
+              onChange={(v) => {
+                markTouched('amadeus.hsbc');
+                setAmadeus((p) => ({ ...p, hsbc: v }));
+              }}
             />
           </div>
         </section>
