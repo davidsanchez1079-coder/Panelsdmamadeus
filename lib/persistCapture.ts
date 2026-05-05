@@ -4,6 +4,8 @@ import path from 'path';
 import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
+import { loadPanelStateFromDb, upsertPanelStateToDb } from './panelState';
+import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 import type { DatosRow, SadamaAmadeusV1 } from './types';
 
 const V1_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_v1.json');
@@ -12,16 +14,13 @@ const EXEC_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.jso
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 function assertFsPersistAllowed() {
-  // En Vercel (y en general en serverless), el filesystem del deploy es de solo lectura.
-  // Guardar en `data/*.json` solo funciona en tu computadora (dev) o en un servidor con disco persistente.
   const onVercel = process.env.VERCEL === '1';
   const forced = process.env.CAPTURE_FS_PERSIST === '1';
   if (onVercel && !forced) {
     throw new Error(
       [
         'No se puede guardar en archivos dentro del deploy (filesystem de solo lectura en Vercel).',
-        'Usa “Descargar .json” y súbelo al repo, o conecta una base de datos/almacenamiento (recomendado: Supabase Postgres o Vercel Blob).',
-        'En local: `npm run dev` en tu Mac sí puede escribir en `data/` si el archivo existe en el proyecto.',
+        'Configura Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) para persistir en base de datos, o usa “Descargar .json” y vuelve a desplegar.',
       ].join(' '),
     );
   }
@@ -39,23 +38,22 @@ function updateDatosMeta(datos: SadamaAmadeusV1['datos']) {
   }
 }
 
-/**
- * Inserta o sustituye por `fecha` y reescribe `sadama_amadeus_v1.json` y `sadama_amadeus_executive.json`.
- * @param fechaToRemove Si al editar cambiaste la fecha del registro, pásala aquí para quitar la fila antigua.
- */
-export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Promise<DatosRow[]> {
-  assertFsPersistAllowed();
-
-  if (!row.fecha || !ISO_DAY.test(row.fecha)) {
-    throw new Error('fecha inválida (use YYYY-MM-DD)');
-  }
-  if (fechaToRemove && (!ISO_DAY.test(fechaToRemove) || fechaToRemove === row.fecha)) {
-    fechaToRemove = undefined;
+async function loadBaselineV1AndExec(): Promise<{ v1: SadamaAmadeusV1; execExisting: ExecutiveData }> {
+  if (isSupabasePersistenceConfigured()) {
+    const row = await loadPanelStateFromDb();
+    if (row?.v1_json && row?.executive_json) {
+      return { v1: row.v1_json, execExisting: row.executive_json };
+    }
   }
 
-  const v1Raw = await fs.readFile(V1_PATH, 'utf8');
-  const v1 = JSON.parse(v1Raw) as SadamaAmadeusV1;
+  const [v1Raw, execRaw] = await Promise.all([fs.readFile(V1_PATH, 'utf8'), fs.readFile(EXEC_PATH, 'utf8')]);
+  return {
+    v1: JSON.parse(v1Raw) as SadamaAmadeusV1,
+    execExisting: JSON.parse(execRaw) as ExecutiveData,
+  };
+}
 
+function mergeRowIntoV1(v1: SadamaAmadeusV1, row: DatosRow, fechaToRemove?: string): DatosRow[] {
   let rows = (v1.datos.rows as DatosRow[]) ?? [];
   if (fechaToRemove) {
     rows = rows.filter((r) => r.fecha !== fechaToRemove);
@@ -86,10 +84,12 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     v1.meta.generated = new Date().toISOString();
   }
 
-  const execRaw = await fs.readFile(EXEC_PATH, 'utf8');
-  const execExisting = JSON.parse(execRaw) as ExecutiveData;
-  const rebuilt = rebuildExecutiveFromDatosRows(v1.datos.rows as DatosRow[]);
-  const execOut: ExecutiveData = {
+  return sortDatosRows(rows);
+}
+
+function buildExecutiveOutput(execExisting: ExecutiveData, rows: DatosRow[]): ExecutiveData {
+  const rebuilt = rebuildExecutiveFromDatosRows(rows);
+  return {
     meta: {
       ...execExisting.meta,
       generated: new Date().toISOString(),
@@ -98,10 +98,34 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     yoy_months: rebuilt.yoy_months,
     executive: rebuilt.executive,
   };
+}
+
+/**
+ * Inserta o sustituye por `fecha` y reescribe `sadama_amadeus_v1.json` y `sadama_amadeus_executive.json`.
+ * @param fechaToRemove Si al editar cambiaste la fecha del registro, pásala aquí para quitar la fila antigua.
+ */
+export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Promise<DatosRow[]> {
+  if (!row.fecha || !ISO_DAY.test(row.fecha)) {
+    throw new Error('fecha inválida (use YYYY-MM-DD)');
+  }
+  if (fechaToRemove && (!ISO_DAY.test(fechaToRemove) || fechaToRemove === row.fecha)) {
+    fechaToRemove = undefined;
+  }
+
+  const { v1, execExisting } = await loadBaselineV1AndExec();
+  const sortedRows = mergeRowIntoV1(v1, row, fechaToRemove);
+  const execOut = buildExecutiveOutput(execExisting, sortedRows);
+
+  if (isSupabasePersistenceConfigured()) {
+    await upsertPanelStateToDb(v1, execOut);
+    return sortedRows;
+  }
+
+  assertFsPersistAllowed();
 
   const jsonOpts = 2;
   await fs.writeFile(V1_PATH, `${JSON.stringify(v1, null, jsonOpts)}\n`);
   await fs.writeFile(EXEC_PATH, `${JSON.stringify(execOut, null, jsonOpts)}\n`);
 
-  return sortDatosRows(rows);
+  return sortedRows;
 }
