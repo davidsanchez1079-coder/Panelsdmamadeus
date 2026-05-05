@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { loadBundledV1AndExecutive, isServerlessFilesystem } from './bundledPanelSeed';
+import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bundledPanelSeed';
 import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
@@ -51,7 +51,7 @@ async function loadBaselineV1AndExec(): Promise<{ v1: SadamaAmadeusV1; execExist
     return { v1: seeded.v1, execExisting: seeded.executive };
   }
 
-  if (isServerlessFilesystem()) {
+  if (mustUseBundledDataInsteadOfFs()) {
     const seeded = await loadBundledV1AndExecutive();
     return { v1: seeded.v1, execExisting: seeded.executive };
   }
@@ -131,7 +131,7 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     return sortedRows;
   }
 
-  if (isServerlessFilesystem()) {
+  if (mustUseBundledDataInsteadOfFs()) {
     throwSupabaseRequired();
   }
 

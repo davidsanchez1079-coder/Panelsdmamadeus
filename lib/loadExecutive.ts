@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { isServerlessFilesystem, loadBundledV1AndExecutive } from './bundledPanelSeed';
+import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bundledPanelSeed';
 import type { ExecutiveData } from './executive';
 import { loadPanelStateFromDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
@@ -16,7 +16,7 @@ export async function loadExecutive(): Promise<ExecutiveData> {
     return executive;
   }
 
-  if (isServerlessFilesystem()) {
+  if (mustUseBundledDataInsteadOfFs()) {
     const { executive } = await loadBundledV1AndExecutive();
     return executive;
   }

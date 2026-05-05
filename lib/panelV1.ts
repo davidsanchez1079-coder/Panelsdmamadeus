@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { isServerlessFilesystem, loadBundledV1AndExecutive } from './bundledPanelSeed';
+import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bundledPanelSeed';
 import { loadPanelStateFromDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 
@@ -23,7 +23,7 @@ export async function loadPanelV1(): Promise<PanelV1File> {
     return v1 as unknown as PanelV1File;
   }
 
-  if (isServerlessFilesystem()) {
+  if (mustUseBundledDataInsteadOfFs()) {
     const { v1 } = await loadBundledV1AndExecutive();
     return v1 as unknown as PanelV1File;
   }

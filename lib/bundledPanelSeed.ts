@@ -14,6 +14,15 @@ export function isServerlessFilesystem(): boolean {
   );
 }
 
+/** Producción (p. ej. Vercel): nunca confiar solo en variables de entorno; Fluid a veces no expone VERCEL=1. */
+export function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+export function mustUseBundledDataInsteadOfFs(): boolean {
+  return isServerlessFilesystem() || isProductionRuntime();
+}
+
 /** Semilla desde JSON empaquetado (sin leer disco en /var/task). */
 export async function loadBundledV1AndExecutive(): Promise<{
   v1: SadamaAmadeusV1;
