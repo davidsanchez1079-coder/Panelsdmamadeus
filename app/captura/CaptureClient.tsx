@@ -41,14 +41,14 @@ function NumField({
   value,
   onChange,
   highlight = null,
-  onFocus,
+  onPaste,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   highlight?: 'copied' | 'modified' | null;
-  onFocus?: () => void;
+  onPaste?: () => void;
 }) {
   const onBlurNormalize = () => {
     if (value.trim() === '') return;
@@ -69,7 +69,7 @@ function NumField({
         autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={onFocus}
+        onPaste={onPaste}
         onBlur={onBlurNormalize}
         className={cn(inputClass, montosFieldClass(highlight))}
       />
@@ -83,14 +83,14 @@ function TextField({
   value,
   onChange,
   highlight = null,
-  onFocus,
+  onPaste,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   highlight?: 'copied' | 'modified' | null;
-  onFocus?: () => void;
+  onPaste?: () => void;
 }) {
   return (
     <div className="space-y-1">
@@ -103,7 +103,7 @@ function TextField({
         autoComplete="off"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={onFocus}
+        onPaste={onPaste}
         className={cn(inputClass, montosFieldClass(highlight))}
       />
     </div>
@@ -155,7 +155,8 @@ function sadamaH(
   if (!baseline) return null;
   const path = `sadama.${String(key)}`;
   if (touched.has(path)) return 'modified';
-  return sadama[key] === baseline.sadama[key] ? 'copied' : 'modified';
+  // No colorear al copiar: solo cuando el usuario pega/edita.
+  return null;
 }
 
 type AmadeusScalarKey = Exclude<keyof AmadeusForm, 'otros_lineas'>;
@@ -169,7 +170,8 @@ function amadeusScalarH(
   if (!baseline) return null;
   const path = `amadeus.${String(key)}`;
   if (touched.has(path)) return 'modified';
-  return amadeus[key] === baseline.amadeus[key] ? 'copied' : 'modified';
+  // No colorear al copiar: solo cuando el usuario pega/edita.
+  return null;
 }
 
 function otrosH(
@@ -180,11 +182,10 @@ function otrosH(
   part: 'monto' | 'proveedor',
 ): 'copied' | 'modified' | null {
   if (!baseline) return null;
-  const c = amadeus.otros_lineas[index]![part];
-  const b = baseline.amadeus.otros_lineas[index]![part];
   const path = `amadeus.otros_lineas.${index}.${part}`;
   if (touched.has(path)) return 'modified';
-  return c === b ? 'copied' : 'modified';
+  // No colorear al copiar: solo cuando el usuario pega/edita.
+  return null;
 }
 
 function fmtMx(n: number) {
@@ -440,10 +441,8 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
       {montosCopyBaseline ? (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
           <span className="font-semibold">Referencia de colores (tras copiar día anterior):</span> fondo{' '}
-          <span className="rounded border border-amber-500 bg-amber-50 px-1 dark:bg-amber-950/50">ámbar</span> = aún igual
-          y sin tocar desde la copia; fondo{' '}
           <span className="rounded border border-sky-500 bg-sky-50 px-1 dark:bg-sky-950/50">azul cielo</span> = campo que
-          ya revisaste/tocaste (aunque vuelva al mismo monto). Fecha y TC no se colorean (no forman parte de esa copia).
+          ya actualizaste (pegando o editando; aunque vuelva al mismo monto). Fecha y TC no se colorean (no forman parte de esa copia).
         </p>
       ) : null}
 
@@ -458,7 +457,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Banco"
               value={sadama.banco}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'banco')}
-              onFocus={() => markTouched('sadama.banco')}
+              onPaste={() => markTouched('sadama.banco')}
               onChange={(v) => {
                 markTouched('sadama.banco');
                 setSadama((p) => ({ ...p, banco: v }));
@@ -469,7 +468,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Inventarios"
               value={sadama.inventarios}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'inventarios')}
-              onFocus={() => markTouched('sadama.inventarios')}
+              onPaste={() => markTouched('sadama.inventarios')}
               onChange={(v) => {
                 markTouched('sadama.inventarios');
                 setSadama((p) => ({ ...p, inventarios: v }));
@@ -480,7 +479,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="CXC"
               value={sadama.cxc}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxc')}
-              onFocus={() => markTouched('sadama.cxc')}
+              onPaste={() => markTouched('sadama.cxc')}
               onChange={(v) => {
                 markTouched('sadama.cxc');
                 setSadama((p) => ({ ...p, cxc: v }));
@@ -491,7 +490,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="CXP (Sadama)"
               value={sadama.cxp}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxp')}
-              onFocus={() => markTouched('sadama.cxp')}
+              onPaste={() => markTouched('sadama.cxp')}
               onChange={(v) => {
                 markTouched('sadama.cxp');
                 setSadama((p) => ({ ...p, cxp: v }));
@@ -502,7 +501,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Fact. día mes"
               value={sadama.fact_dia_mes}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'fact_dia_mes')}
-              onFocus={() => markTouched('sadama.fact_dia_mes')}
+              onPaste={() => markTouched('sadama.fact_dia_mes')}
               onChange={(v) => {
                 markTouched('sadama.fact_dia_mes');
                 setSadama((p) => ({ ...p, fact_dia_mes: v }));
@@ -521,7 +520,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Inventarios"
               value={amadeus.inventarios}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'inventarios')}
-              onFocus={() => markTouched('amadeus.inventarios')}
+              onPaste={() => markTouched('amadeus.inventarios')}
               onChange={(v) => {
                 markTouched('amadeus.inventarios');
                 setAmadeus((p) => ({ ...p, inventarios: v }));
@@ -532,7 +531,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="CXC"
               value={amadeus.cxc}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'cxc')}
-              onFocus={() => markTouched('amadeus.cxc')}
+              onPaste={() => markTouched('amadeus.cxc')}
               onChange={(v) => {
                 markTouched('amadeus.cxc');
                 setAmadeus((p) => ({ ...p, cxc: v }));
@@ -543,7 +542,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Fact. día / mes"
               value={amadeus.fact_dia_mes}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'fact_dia_mes')}
-              onFocus={() => markTouched('amadeus.fact_dia_mes')}
+              onPaste={() => markTouched('amadeus.fact_dia_mes')}
               onChange={(v) => {
                 markTouched('amadeus.fact_dia_mes');
                 setAmadeus((p) => ({ ...p, fact_dia_mes: v }));
@@ -554,7 +553,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Compras mes"
               value={amadeus.compras_mes}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'compras_mes')}
-              onFocus={() => markTouched('amadeus.compras_mes')}
+              onPaste={() => markTouched('amadeus.compras_mes')}
               onChange={(v) => {
                 markTouched('amadeus.compras_mes');
                 setAmadeus((p) => ({ ...p, compras_mes: v }));
@@ -570,7 +569,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Sandvik"
               value={amadeus.sandvik}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'sandvik')}
-              onFocus={() => markTouched('amadeus.sandvik')}
+              onPaste={() => markTouched('amadeus.sandvik')}
               onChange={(v) => {
                 markTouched('amadeus.sandvik');
                 setAmadeus((p) => ({ ...p, sandvik: v }));
@@ -581,7 +580,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Vargus"
               value={amadeus.vargus}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'vargus')}
-              onFocus={() => markTouched('amadeus.vargus')}
+              onPaste={() => markTouched('amadeus.vargus')}
               onChange={(v) => {
                 markTouched('amadeus.vargus');
                 setAmadeus((p) => ({ ...p, vargus: v }));
@@ -592,7 +591,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Mexicana"
               value={amadeus.mexicana}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'mexicana')}
-              onFocus={() => markTouched('amadeus.mexicana')}
+              onPaste={() => markTouched('amadeus.mexicana')}
               onChange={(v) => {
                 markTouched('amadeus.mexicana');
                 setAmadeus((p) => ({ ...p, mexicana: v }));
@@ -603,7 +602,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Sadama"
               value={amadeus.probadores_sadama}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'probadores_sadama')}
-              onFocus={() => markTouched('amadeus.probadores_sadama')}
+              onPaste={() => markTouched('amadeus.probadores_sadama')}
               onChange={(v) => {
                 markTouched('amadeus.probadores_sadama');
                 setAmadeus((p) => ({ ...p, probadores_sadama: v }));
@@ -621,7 +620,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                   label={`Otros ${i + 1} · monto`}
                   value={amadeus.otros_lineas[i]!.monto}
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'monto')}
-                  onFocus={() => markTouched(`amadeus.otros_lineas.${i}.monto`)}
+                  onPaste={() => markTouched(`amadeus.otros_lineas.${i}.monto`)}
                   onChange={(v) => {
                     markTouched(`amadeus.otros_lineas.${i}.monto`);
                     setAmadeus((p) => ({
@@ -635,7 +634,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                   label={`Otros ${i + 1} · proveedor`}
                   value={amadeus.otros_lineas[i]!.proveedor}
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'proveedor')}
-                  onFocus={() => markTouched(`amadeus.otros_lineas.${i}.proveedor`)}
+                  onPaste={() => markTouched(`amadeus.otros_lineas.${i}.proveedor`)}
                   onChange={(v) => {
                     markTouched(`amadeus.otros_lineas.${i}.proveedor`);
                     setAmadeus((p) => ({
@@ -654,7 +653,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Bajío USD"
               value={amadeus.bajio_usd}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_usd')}
-              onFocus={() => markTouched('amadeus.bajio_usd')}
+              onPaste={() => markTouched('amadeus.bajio_usd')}
               onChange={(v) => {
                 markTouched('amadeus.bajio_usd');
                 setAmadeus((p) => ({ ...p, bajio_usd: v }));
@@ -665,7 +664,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="Bajío MXN"
               value={amadeus.bajio_mxn}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_mxn')}
-              onFocus={() => markTouched('amadeus.bajio_mxn')}
+              onPaste={() => markTouched('amadeus.bajio_mxn')}
               onChange={(v) => {
                 markTouched('amadeus.bajio_mxn');
                 setAmadeus((p) => ({ ...p, bajio_mxn: v }));
@@ -676,7 +675,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               label="HSBC"
               value={amadeus.hsbc}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'hsbc')}
-              onFocus={() => markTouched('amadeus.hsbc')}
+              onPaste={() => markTouched('amadeus.hsbc')}
               onChange={(v) => {
                 markTouched('amadeus.hsbc');
                 setAmadeus((p) => ({ ...p, hsbc: v }));
