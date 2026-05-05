@@ -15,6 +15,7 @@ import { rebuildExecutiveFromDatosRows } from '@/lib/rebuildExecutiveFromDatos';
 import { loadPanelV1 } from '@/lib/panelV1';
 import type { DatosRow } from '@/lib/types';
 import { ExecutiveClient } from './ui/ExecutiveClient';
+import { ExecutiveAssistant } from './ui/ExecutiveAssistant';
 
 async function loadMontoNetoMensualJson(fileName: string): Promise<Record<string, number> | null> {
   try {
@@ -103,6 +104,8 @@ export default async function ExecutivePage() {
         amadeusMontoNetoPorMes={amadeusMontoNetoPorMes ?? undefined}
         sadamaMontoNetoPorMes={sadamaMontoNetoPorMes ?? undefined}
       />
+
+      <ExecutiveAssistant />
     </main>
   );
 }
