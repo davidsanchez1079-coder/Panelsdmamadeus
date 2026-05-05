@@ -13,15 +13,25 @@ const EXEC_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.jso
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-function assertFsPersistAllowed() {
-  // En Vercel el filesystem del deploy es siempre solo lectura: nunca intentar writeFile.
-  if (process.env.VERCEL === '1') {
+/** Runtime serverless / producción con filesystem de solo lectura (Vercel, Lambda, etc.). */
+function isReadOnlyDeployFilesystem() {
+  const cwd = process.cwd();
+  return (
+    process.env.VERCEL === '1' ||
+    Boolean(process.env.LAMBDA_TASK_ROOT) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    cwd.startsWith('/var/task')
+  );
+}
+
+function assertLocalFsPersistAllowed() {
+  if (isReadOnlyDeployFilesystem()) {
     throw new Error(
       [
-        'En Vercel no se puede guardar en archivos locales (solo lectura).',
-        'Configura en el proyecto: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL, más SUPABASE_SERVICE_ROLE_KEY;',
-        'crea la tabla panelsdm_state (ver supabase/migrations) y vuelve a desplegar.',
-        'No uses CAPTURE_FS_PERSIST en Vercel (no habilita escritura en disco).',
+        'Este entorno no permite escribir archivos en `data/` (filesystem de solo lectura; ruta típica /var/task).',
+        'Configura: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY;',
+        'crea la tabla `panelsdm_state` (ver `supabase/migrations/`) y vuelve a desplegar el último commit.',
+        'Comprueba que el deploy ya no esté en una versión antigua del código.',
       ].join(' '),
     );
   }
@@ -122,7 +132,7 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     return sortedRows;
   }
 
-  assertFsPersistAllowed();
+  assertLocalFsPersistAllowed();
 
   const jsonOpts = 2;
   await fs.writeFile(V1_PATH, `${JSON.stringify(v1, null, jsonOpts)}\n`);
