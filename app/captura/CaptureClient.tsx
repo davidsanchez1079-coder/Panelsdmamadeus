@@ -21,12 +21,12 @@ import type { DatosRow } from '@/lib/types';
 const inputClass =
   'w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm tabular-nums text-zinc-900 transition-colors dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100';
 
-/** Tras «Copiar datos anteriores»: ámbar = copiado/no actualizado; cielo = ya pegado/editado. */
+/** Tras «Copiar datos anteriores»: azul = copiado/no actualizado; verde = ya pegado/editado. */
 const montosHighlightClass = {
   copied:
-    'border-amber-600/90 bg-amber-200/70 ring-4 ring-inset ring-amber-500/70 dark:border-amber-300/90 dark:bg-amber-500/25 dark:ring-amber-300/70',
-  modified:
     'border-sky-600/90 bg-sky-200/70 ring-4 ring-inset ring-sky-500/70 dark:border-sky-300/90 dark:bg-sky-500/25 dark:ring-sky-300/70',
+  modified:
+    'border-emerald-600/90 bg-emerald-200/70 ring-4 ring-inset ring-emerald-500/70 dark:border-emerald-300/90 dark:bg-emerald-500/25 dark:ring-emerald-300/70',
 } as const;
 
 function montosFieldClass(highlight: 'copied' | 'modified' | null) {
@@ -210,8 +210,46 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   );
   /** Campos tocados desde que se copió el día anterior (aunque vuelvan al mismo valor). */
   const [montosTouched, setMontosTouched] = useState<Set<string>>(() => new Set());
+  /** Historial para deshacer (Ctrl/Cmd+Z fuera de inputs). */
+  const undoStackRef = useRef<
+    Array<{
+      fecha: string;
+      tc: string;
+      sadama: SadamaForm;
+      amadeus: AmadeusForm;
+      editingOriginalFecha: string | null;
+      montosCopyBaseline: { sadama: SadamaForm; amadeus: AmadeusForm } | null;
+      montosTouched: string[];
+    }>
+  >([]);
   const copyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previousCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const snapshotForUndo = () => ({
+    fecha,
+    tc,
+    sadama: structuredClone(sadama),
+    amadeus: structuredClone(amadeus),
+    editingOriginalFecha,
+    montosCopyBaseline: montosCopyBaseline ? structuredClone(montosCopyBaseline) : null,
+    montosTouched: [...montosTouched.values()],
+  });
+
+  const pushUndo = () => {
+    undoStackRef.current.push(snapshotForUndo());
+    // Mantener un historial razonable.
+    if (undoStackRef.current.length > 80) undoStackRef.current.shift();
+  };
+
+  const restoreFromUndo = (s: (typeof undoStackRef.current)[number]) => {
+    setFecha(s.fecha);
+    setTc(s.tc);
+    setSadama(s.sadama);
+    setAmadeus(s.amadeus);
+    setEditingOriginalFecha(s.editingOriginalFecha);
+    setMontosCopyBaseline(s.montosCopyBaseline);
+    setMontosTouched(new Set(s.montosTouched));
+  };
 
   const markTouched = (path: string) => {
     if (!montosCopyBaseline) return;
@@ -278,6 +316,28 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   }, []);
 
   useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isUndo = (e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z');
+      if (!isUndo) return;
+
+      // No interferir con el undo nativo dentro de inputs/textarea/contenteditable.
+      const t = e.target as HTMLElement | null;
+      const tag = t?.tagName?.toLowerCase();
+      const isEditable =
+        tag === 'input' || tag === 'textarea' || (t != null && (t as HTMLElement).isContentEditable === true);
+      if (isEditable) return;
+
+      const stack = undoStackRef.current;
+      const last = stack.pop();
+      if (!last) return;
+      e.preventDefault();
+      restoreFromUndo(last);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [fecha, tc, sadama, amadeus, editingOriginalFecha, montosCopyBaseline, montosTouched]);
+
+  useEffect(() => {
     if (!fecha) return;
     const s = suggestTcForFecha(initialRows, fecha);
     if (s != null) setTc(amountToInputString(s));
@@ -321,6 +381,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   };
 
   const onLimpiarMontos = () => {
+    pushUndo();
     setSadama(emptySadama);
     setAmadeus(emptyAmadeus);
     resetCopyContext();
@@ -328,6 +389,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
 
   const onCopiarDatosAnteriores = () => {
     if (!previousRowForMontos) return;
+    pushUndo();
     const s = captureStringsFromDatosRow(previousRowForMontos);
     setSadama(s.sadama);
     setAmadeus(s.amadeus);
@@ -339,6 +401,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   };
 
   const onNuevoRegistro = () => {
+    pushUndo();
     setEditingOriginalFecha(null);
     setSaveError(null);
     setPostSaveAnalysis(null);
@@ -352,6 +415,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   };
 
   const onEditar = (row: DatosRow) => {
+    pushUndo();
     setSaveError(null);
     setPostSaveAnalysis(null);
     setEditingOriginalFecha(row.fecha);
@@ -440,9 +504,9 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
       {montosCopyBaseline ? (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
           <span className="font-semibold">Referencia de colores (tras copiar día anterior):</span> fondo{' '}
-          <span className="rounded border border-amber-600 bg-amber-50 px-1 dark:bg-amber-950/50">ámbar</span> = valor copiado
-          (aún no actualizado); fondo{' '}
-          <span className="rounded border border-sky-500 bg-sky-50 px-1 dark:bg-sky-950/50">azul cielo</span> = campo que
+          <span className="rounded border border-sky-600 bg-sky-50 px-1 dark:bg-sky-950/50">azul</span> = valor copiado (aún no
+          actualizado); fondo{' '}
+          <span className="rounded border border-emerald-600 bg-emerald-50 px-1 dark:bg-emerald-950/50">verde</span> = campo que
           ya actualizaste (pegando o editando; aunque vuelva al mismo monto). Fecha y TC no se colorean (no forman parte de esa copia).
         </p>
       ) : null}
@@ -460,6 +524,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'banco')}
               onPaste={() => markTouched('sadama.banco')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('sadama.banco');
                 setSadama((p) => ({ ...p, banco: v }));
               }}
@@ -471,6 +536,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'inventarios')}
               onPaste={() => markTouched('sadama.inventarios')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('sadama.inventarios');
                 setSadama((p) => ({ ...p, inventarios: v }));
               }}
@@ -482,6 +548,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxc')}
               onPaste={() => markTouched('sadama.cxc')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('sadama.cxc');
                 setSadama((p) => ({ ...p, cxc: v }));
               }}
@@ -493,6 +560,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxp')}
               onPaste={() => markTouched('sadama.cxp')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('sadama.cxp');
                 setSadama((p) => ({ ...p, cxp: v }));
               }}
@@ -504,6 +572,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'fact_dia_mes')}
               onPaste={() => markTouched('sadama.fact_dia_mes')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('sadama.fact_dia_mes');
                 setSadama((p) => ({ ...p, fact_dia_mes: v }));
               }}
@@ -523,6 +592,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'inventarios')}
               onPaste={() => markTouched('amadeus.inventarios')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.inventarios');
                 setAmadeus((p) => ({ ...p, inventarios: v }));
               }}
@@ -534,6 +604,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'cxc')}
               onPaste={() => markTouched('amadeus.cxc')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.cxc');
                 setAmadeus((p) => ({ ...p, cxc: v }));
               }}
@@ -545,6 +616,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'fact_dia_mes')}
               onPaste={() => markTouched('amadeus.fact_dia_mes')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.fact_dia_mes');
                 setAmadeus((p) => ({ ...p, fact_dia_mes: v }));
               }}
@@ -556,6 +628,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'compras_mes')}
               onPaste={() => markTouched('amadeus.compras_mes')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.compras_mes');
                 setAmadeus((p) => ({ ...p, compras_mes: v }));
               }}
@@ -572,6 +645,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'sandvik')}
               onPaste={() => markTouched('amadeus.sandvik')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.sandvik');
                 setAmadeus((p) => ({ ...p, sandvik: v }));
               }}
@@ -583,6 +657,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'vargus')}
               onPaste={() => markTouched('amadeus.vargus')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.vargus');
                 setAmadeus((p) => ({ ...p, vargus: v }));
               }}
@@ -594,6 +669,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'mexicana')}
               onPaste={() => markTouched('amadeus.mexicana')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.mexicana');
                 setAmadeus((p) => ({ ...p, mexicana: v }));
               }}
@@ -605,6 +681,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'probadores_sadama')}
               onPaste={() => markTouched('amadeus.probadores_sadama')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.probadores_sadama');
                 setAmadeus((p) => ({ ...p, probadores_sadama: v }));
               }}
@@ -623,6 +700,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'monto')}
                   onPaste={() => markTouched(`amadeus.otros_lineas.${i}.monto`)}
                   onChange={(v) => {
+                    pushUndo();
                     markTouched(`amadeus.otros_lineas.${i}.monto`);
                     setAmadeus((p) => ({
                       ...p,
@@ -637,6 +715,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'proveedor')}
                   onPaste={() => markTouched(`amadeus.otros_lineas.${i}.proveedor`)}
                   onChange={(v) => {
+                    pushUndo();
                     markTouched(`amadeus.otros_lineas.${i}.proveedor`);
                     setAmadeus((p) => ({
                       ...p,
@@ -656,6 +735,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_usd')}
               onPaste={() => markTouched('amadeus.bajio_usd')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.bajio_usd');
                 setAmadeus((p) => ({ ...p, bajio_usd: v }));
               }}
@@ -667,6 +747,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_mxn')}
               onPaste={() => markTouched('amadeus.bajio_mxn')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.bajio_mxn');
                 setAmadeus((p) => ({ ...p, bajio_mxn: v }));
               }}
@@ -678,6 +759,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'hsbc')}
               onPaste={() => markTouched('amadeus.hsbc')}
               onChange={(v) => {
+                pushUndo();
                 markTouched('amadeus.hsbc');
                 setAmadeus((p) => ({ ...p, hsbc: v }));
               }}
