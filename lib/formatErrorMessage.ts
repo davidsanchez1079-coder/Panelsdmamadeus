@@ -14,6 +14,17 @@ export function formatErrorMessage(e: unknown): string {
         out +=
           ' Revisa SUPABASE_URL / NEXT_PUBLIC_SUPABASE_URL: debe ser solo la URL base del proyecto (p. ej. https://xxxx.supabase.co), sin /rest/v1.';
       }
+      if (code === 'PGRST205' || code === '42P01') {
+        out +=
+          ' La tabla `public.panelsdm_state` no existe o no está expuesta a la API. En Supabase → SQL Editor, ejecuta el script de `supabase/migrations/` del repo (crear tabla) y vuelve a intentar.';
+      }
+      if (code === 'PGRST301' || code === '42501') {
+        out +=
+          ' Clave o permisos: comprueba que `SUPABASE_SERVICE_ROLE_KEY` sea la clave **service_role** (Settings → API), no la anon/public, y que esté en Vercel para el entorno **Production** con redeploy.';
+      }
+      if (code === 'PGRST000' || code === 'PGRST001') {
+        out += ' Problema de conexión con la base de datos en Supabase; revisa estado del proyecto o la URL.';
+      }
       return out;
     }
   }
