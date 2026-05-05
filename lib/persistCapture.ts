@@ -5,7 +5,7 @@ import { loadBundledV1AndExecutive, mustUseBundledDataInsteadOfFs } from './bund
 import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
-import { tryLoadPanelStateFromDb, upsertPanelStateToDb } from './panelState';
+import { loadPanelStateFromDb, upsertPanelStateToDb } from './panelState';
 import { isSupabasePersistenceConfigured } from './supabaseAdmin';
 import type { DatosRow, SadamaAmadeusV1 } from './types';
 
@@ -39,14 +39,22 @@ function updateDatosMeta(datos: SadamaAmadeusV1['datos']) {
 
 async function loadBaselineV1AndExec(): Promise<{ v1: SadamaAmadeusV1; execExisting: ExecutiveData }> {
   if (isSupabasePersistenceConfigured()) {
-    const row = await tryLoadPanelStateFromDb();
+    // Lectura estricta: si Supabase falla, no guardamos con semilla (evitar pisar datos en la nube).
+    const row = await loadPanelStateFromDb();
     if (row?.v1_json && row?.executive_json) {
       return {
         v1: structuredClone(row.v1_json as SadamaAmadeusV1),
         execExisting: structuredClone(row.executive_json as ExecutiveData),
       };
     }
-    // Primera captura: semilla empaquetada (evita fs en /var/task).
+    if (row?.v1_json) {
+      const seeded = await loadBundledV1AndExecutive();
+      return {
+        v1: structuredClone(row.v1_json as SadamaAmadeusV1),
+        execExisting: seeded.executive,
+      };
+    }
+    // Tabla vacía o sin fila `default`: primera captura desde semilla empaquetada.
     const seeded = await loadBundledV1AndExecutive();
     return { v1: seeded.v1, execExisting: seeded.executive };
   }

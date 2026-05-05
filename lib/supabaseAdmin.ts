@@ -12,7 +12,14 @@ export function normalizeSupabaseProjectUrl(raw: string): string {
   if (!u) return '';
   const idx = u.toLowerCase().indexOf('/rest/v');
   if (idx !== -1) u = u.slice(0, idx);
-  return u.replace(/\/+$/, '');
+  u = u.replace(/\/+$/, '');
+  try {
+    const parsed = new URL(u);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
+    return u;
+  } catch {
+    return '';
+  }
 }
 
 /** URL del proyecto: preferir SUPABASE_URL; muchos setups de Next ya tienen NEXT_PUBLIC_SUPABASE_URL. */
@@ -41,5 +48,5 @@ export function getSupabaseAdmin(): SupabaseClient {
 }
 
 export function isSupabasePersistenceConfigured() {
-  return Boolean(resolveSupabaseUrl() && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return Boolean(resolveSupabaseUrl() && (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim());
 }

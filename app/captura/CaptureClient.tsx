@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
@@ -131,6 +131,9 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [postSaveAnalysis, setPostSaveAnalysis] = useState<CaptureSaveAnalysis | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
+  const copyFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nextRow = useMemo(() => nextDatosRowNumber(initialRows), [initialRows]);
 
@@ -175,6 +178,13 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (copyFlashTimerRef.current) clearTimeout(copyFlashTimerRef.current);
+      if (previousCopyTimerRef.current) clearTimeout(previousCopyTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!fecha) return;
     const s = suggestTcForFecha(initialRows, fecha);
     if (s != null) setTc(amountToInputString(s));
@@ -195,9 +205,15 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
 
   const onCopy = async () => {
     if (!json) return;
-    await navigator.clipboard.writeText(json);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopyError(null);
+    try {
+      await navigator.clipboard.writeText(json);
+      setCopied(true);
+      if (copyFlashTimerRef.current) clearTimeout(copyFlashTimerRef.current);
+      copyFlashTimerRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError('No se pudo copiar al portapapeles. Revisa permisos del navegador o usa «Descargar .json».');
+    }
   };
 
   const onDownload = () => {
@@ -222,7 +238,8 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     setSadama(s.sadama);
     setAmadeus(s.amadeus);
     setCopiedPreviousLabel(s.fecha);
-    window.setTimeout(() => setCopiedPreviousLabel(null), 2500);
+    if (previousCopyTimerRef.current) clearTimeout(previousCopyTimerRef.current);
+    previousCopyTimerRef.current = setTimeout(() => setCopiedPreviousLabel(null), 2500);
   };
 
   const onNuevoRegistro = () => {
@@ -519,7 +536,20 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
           Descargar .json
         </Button>
       </div>
-      {saveError ? <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p> : null}
+      {saveError ? (
+        <div className="space-y-1">
+          <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+            Si el mensaje habla de Supabase o permisos, abre en una pestaña nueva la ruta{' '}
+            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">/api/capture/supabase-health</code> (mismo
+            sitio) para ver un diagnóstico del servidor.
+          </p>
+        </div>
+      ) : null}
+
+      {copyError ? (
+        <p className="text-sm text-amber-800 dark:text-amber-200">{copyError}</p>
+      ) : null}
 
       {postSaveAnalysis ? (
         <div
