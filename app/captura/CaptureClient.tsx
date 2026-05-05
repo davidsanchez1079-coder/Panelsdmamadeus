@@ -21,12 +21,12 @@ import type { DatosRow } from '@/lib/types';
 const inputClass =
   'w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm tabular-nums text-zinc-900 transition-colors dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100';
 
-/** Tras «Copiar datos anteriores»: ámbar = sin cambiar; cielo = ya editado respecto a esa copia. */
+/** Tras «Copiar datos anteriores»: ámbar = copiado/no actualizado; cielo = ya pegado/editado. */
 const montosHighlightClass = {
   copied:
-    'border-amber-500/80 bg-amber-200/50 ring-2 ring-inset ring-amber-400/60 dark:border-amber-400/60 dark:bg-amber-400/10 dark:ring-amber-300/30',
+    'border-amber-600/90 bg-amber-200/70 ring-4 ring-inset ring-amber-500/70 dark:border-amber-300/90 dark:bg-amber-500/25 dark:ring-amber-300/70',
   modified:
-    'border-sky-500/80 bg-sky-200/45 ring-2 ring-inset ring-sky-400/60 dark:border-sky-400/60 dark:bg-sky-400/10 dark:ring-sky-300/30',
+    'border-sky-600/90 bg-sky-200/70 ring-4 ring-inset ring-sky-500/70 dark:border-sky-300/90 dark:bg-sky-500/25 dark:ring-sky-300/70',
 } as const;
 
 function montosFieldClass(highlight: 'copied' | 'modified' | null) {
@@ -155,8 +155,7 @@ function sadamaH(
   if (!baseline) return null;
   const path = `sadama.${String(key)}`;
   if (touched.has(path)) return 'modified';
-  // No colorear al copiar: solo cuando el usuario pega/edita.
-  return null;
+  return sadama[key] === baseline.sadama[key] ? 'copied' : 'modified';
 }
 
 type AmadeusScalarKey = Exclude<keyof AmadeusForm, 'otros_lineas'>;
@@ -170,8 +169,7 @@ function amadeusScalarH(
   if (!baseline) return null;
   const path = `amadeus.${String(key)}`;
   if (touched.has(path)) return 'modified';
-  // No colorear al copiar: solo cuando el usuario pega/edita.
-  return null;
+  return amadeus[key] === baseline.amadeus[key] ? 'copied' : 'modified';
 }
 
 function otrosH(
@@ -182,10 +180,11 @@ function otrosH(
   part: 'monto' | 'proveedor',
 ): 'copied' | 'modified' | null {
   if (!baseline) return null;
+  const c = amadeus.otros_lineas[index]![part];
+  const b = baseline.amadeus.otros_lineas[index]![part];
   const path = `amadeus.otros_lineas.${index}.${part}`;
   if (touched.has(path)) return 'modified';
-  // No colorear al copiar: solo cuando el usuario pega/edita.
-  return null;
+  return c === b ? 'copied' : 'modified';
 }
 
 function fmtMx(n: number) {
@@ -441,6 +440,8 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
       {montosCopyBaseline ? (
         <p className="rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-[11px] leading-snug text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
           <span className="font-semibold">Referencia de colores (tras copiar día anterior):</span> fondo{' '}
+          <span className="rounded border border-amber-600 bg-amber-50 px-1 dark:bg-amber-950/50">ámbar</span> = valor copiado
+          (aún no actualizado); fondo{' '}
           <span className="rounded border border-sky-500 bg-sky-50 px-1 dark:bg-sky-950/50">azul cielo</span> = campo que
           ya actualizaste (pegando o editando; aunque vuelva al mismo monto). Fecha y TC no se colorean (no forman parte de esa copia).
         </p>
