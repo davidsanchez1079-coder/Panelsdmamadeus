@@ -11,6 +11,22 @@ const EXEC_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.jso
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+function assertFsPersistAllowed() {
+  // En Vercel (y en general en serverless), el filesystem del deploy es de solo lectura.
+  // Guardar en `data/*.json` solo funciona en tu computadora (dev) o en un servidor con disco persistente.
+  const onVercel = process.env.VERCEL === '1';
+  const forced = process.env.CAPTURE_FS_PERSIST === '1';
+  if (onVercel && !forced) {
+    throw new Error(
+      [
+        'No se puede guardar en archivos dentro del deploy (filesystem de solo lectura en Vercel).',
+        'Usa “Descargar .json” y súbelo al repo, o conecta una base de datos/almacenamiento (recomendado: Supabase Postgres o Vercel Blob).',
+        'En local: `npm run dev` en tu Mac sí puede escribir en `data/` si el archivo existe en el proyecto.',
+      ].join(' '),
+    );
+  }
+}
+
 function sortDatosRows(rows: DatosRow[]): DatosRow[] {
   return [...rows].sort((a, b) => a.fecha.localeCompare(b.fecha));
 }
@@ -28,6 +44,8 @@ function updateDatosMeta(datos: SadamaAmadeusV1['datos']) {
  * @param fechaToRemove Si al editar cambiaste la fecha del registro, pásala aquí para quitar la fila antigua.
  */
 export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Promise<DatosRow[]> {
+  assertFsPersistAllowed();
+
   if (!row.fecha || !ISO_DAY.test(row.fecha)) {
     throw new Error('fecha inválida (use YYYY-MM-DD)');
   }

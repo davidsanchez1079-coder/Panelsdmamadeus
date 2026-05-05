@@ -20,6 +20,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, analysis });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ ok: false, error: msg }, { status: 400 });
+    const status =
+      msg.includes('No se puede guardar en archivos dentro del deploy') ||
+      msg.includes('EROFS') ||
+      msg.toLowerCase().includes('read-only file system')
+        ? 501
+        : 400;
+    return NextResponse.json({ ok: false, error: msg }, { status });
   }
 }
