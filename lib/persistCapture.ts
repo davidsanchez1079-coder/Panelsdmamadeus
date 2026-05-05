@@ -14,13 +14,14 @@ const EXEC_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.jso
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 function assertFsPersistAllowed() {
-  const onVercel = process.env.VERCEL === '1';
-  const forced = process.env.CAPTURE_FS_PERSIST === '1';
-  if (onVercel && !forced) {
+  // En Vercel el filesystem del deploy es siempre solo lectura: nunca intentar writeFile.
+  if (process.env.VERCEL === '1') {
     throw new Error(
       [
-        'No se puede guardar en archivos dentro del deploy (filesystem de solo lectura en Vercel).',
-        'Configura Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY) para persistir en base de datos, o usa “Descargar .json” y vuelve a desplegar.',
+        'En Vercel no se puede guardar en archivos locales (solo lectura).',
+        'Configura en el proyecto: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL, más SUPABASE_SERVICE_ROLE_KEY;',
+        'crea la tabla panelsdm_state (ver supabase/migrations) y vuelve a desplegar.',
+        'No uses CAPTURE_FS_PERSIST en Vercel (no habilita escritura en disco).',
       ].join(' '),
     );
   }
