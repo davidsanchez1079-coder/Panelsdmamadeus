@@ -19,12 +19,14 @@ import { cn } from '@/lib/utils';
 import type { DatosRow } from '@/lib/types';
 
 const inputClass =
-  'w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100';
+  'w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm tabular-nums text-zinc-900 transition-colors dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100';
 
 /** Tras «Copiar datos anteriores»: ámbar = sin cambiar; cielo = ya editado respecto a esa copia. */
 const montosHighlightClass = {
-  copied: 'border-amber-400 bg-amber-50/95 dark:border-amber-600 dark:bg-amber-950/45',
-  modified: 'border-sky-500 bg-sky-50/95 dark:border-sky-600 dark:bg-sky-950/40',
+  copied:
+    'border-amber-500/80 bg-amber-200/50 ring-2 ring-inset ring-amber-400/60 dark:border-amber-400/60 dark:bg-amber-400/10 dark:ring-amber-300/30',
+  modified:
+    'border-sky-500/80 bg-sky-200/45 ring-2 ring-inset ring-sky-400/60 dark:border-sky-400/60 dark:bg-sky-400/10 dark:ring-sky-300/30',
 } as const;
 
 function montosFieldClass(highlight: 'copied' | 'modified' | null) {
