@@ -126,6 +126,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   const [sadama, setSadama] = useState(emptySadama);
   const [amadeus, setAmadeus] = useState(emptyAmadeus);
   const [copied, setCopied] = useState(false);
+  const [copiedPreviousLabel, setCopiedPreviousLabel] = useState<string | null>(null);
   const [editingOriginalFecha, setEditingOriginalFecha] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -139,7 +140,8 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     return typeof r?._row === 'number' ? r._row : nextRow;
   }, [editingOriginalFecha, initialRows, nextRow]);
 
-  const recentRows = useMemo(() => {
+  /** Una fila por fecha (la de `_row` más alto si hay duplicados). */
+  const uniqueRowsByDate = useMemo(() => {
     const map = new Map<string, DatosRow>();
     for (const raw of initialRows) {
       const r = raw as DatosRow;
@@ -149,8 +151,24 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
       const pn = prev && typeof prev._row === 'number' ? prev._row : -1;
       if (!prev || rn >= pn) map.set(r.fecha, r);
     }
-    return [...map.values()].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 120);
+    return [...map.values()];
   }, [initialRows]);
+
+  const recentRows = useMemo(
+    () => [...uniqueRowsByDate].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 120),
+    [uniqueRowsByDate],
+  );
+
+  /** Último registro guardado con fecha estrictamente anterior a la del formulario (plantilla de montos). */
+  const previousRowForMontos = useMemo(() => {
+    if (!fecha) return null;
+    let best: DatosRow | null = null;
+    for (const r of uniqueRowsByDate) {
+      if (r.fecha >= fecha) continue;
+      if (!best || r.fecha > best.fecha) best = r;
+    }
+    return best;
+  }, [uniqueRowsByDate, fecha]);
 
   useEffect(() => {
     setFecha(format(new Date(), 'yyyy-MM-dd'));
@@ -196,6 +214,15 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
   const onLimpiarMontos = () => {
     setSadama(emptySadama);
     setAmadeus(emptyAmadeus);
+  };
+
+  const onCopiarDatosAnteriores = () => {
+    if (!previousRowForMontos) return;
+    const s = captureStringsFromDatosRow(previousRowForMontos);
+    setSadama(s.sadama);
+    setAmadeus(s.amadeus);
+    setCopiedPreviousLabel(s.fecha);
+    window.setTimeout(() => setCopiedPreviousLabel(null), 2500);
   };
 
   const onNuevoRegistro = () => {
@@ -470,6 +497,20 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={onLimpiarMontos}>
           Limpiar montos
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onCopiarDatosAnteriores}
+          disabled={!previousRowForMontos}
+          title={
+            previousRowForMontos
+              ? `Copia montos de Sadama y Amadeus del registro del ${previousRowForMontos.fecha}. No cambia la fecha ni el tipo de cambio.`
+              : 'No hay ningún registro con fecha anterior a la seleccionada.'
+          }
+        >
+          {copiedPreviousLabel ? `Copiado desde ${copiedPreviousLabel}` : 'Copiar datos anteriores'}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={onCopy} disabled={!json}>
           {copied ? 'Copiado' : 'Copiar JSON'}
