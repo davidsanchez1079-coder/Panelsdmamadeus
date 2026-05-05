@@ -234,9 +234,20 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ row: built, removeFecha }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string; analysis?: CaptureSaveAnalysis };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string | Record<string, unknown>;
+        analysis?: CaptureSaveAnalysis;
+      };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'No se pudo guardar');
+        const errRaw = data.error;
+        const errText =
+          typeof errRaw === 'string'
+            ? errRaw
+            : errRaw != null && typeof errRaw === 'object'
+              ? JSON.stringify(errRaw)
+              : 'No se pudo guardar';
+        throw new Error(errText);
       }
       if (data.analysis) setPostSaveAnalysis(data.analysis);
       setEditingOriginalFecha(null);

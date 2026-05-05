@@ -1,4 +1,5 @@
 import type { ExecutiveData } from './executive';
+import { formatErrorMessage } from './formatErrorMessage';
 import { getSupabaseAdmin } from './supabaseAdmin';
 import type { SadamaAmadeusV1 } from './types';
 
@@ -19,7 +20,7 @@ export async function loadPanelStateFromDb(): Promise<PanelStateRow | null> {
     .eq('id', PANELSDM_STATE_ID)
     .maybeSingle();
 
-  if (error) throw error;
+  if (error) throw new Error(formatErrorMessage(error));
   if (!data) return null;
   return data as unknown as PanelStateRow;
 }
@@ -34,5 +35,5 @@ export async function upsertPanelStateToDb(v1: SadamaAmadeusV1, executive: Execu
   };
 
   const { error } = await supabase.from('panelsdm_state').upsert(payload, { onConflict: 'id' });
-  if (error) throw error;
+  if (error) throw new Error(formatErrorMessage(error));
 }

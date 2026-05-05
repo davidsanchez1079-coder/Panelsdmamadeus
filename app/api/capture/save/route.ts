@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 import { analyzeCaptureSave } from '@/lib/captureSaveAnalysis';
+import { formatErrorMessage } from '@/lib/formatErrorMessage';
 import { persistDatosRow } from '@/lib/persistCapture';
 import type { DatosRow } from '@/lib/types';
 
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     revalidatePath('/captura');
     return NextResponse.json({ ok: true, analysis });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+    const msg = formatErrorMessage(e);
     const status =
       msg.includes('No se puede guardar en archivos dentro del deploy') ||
       msg.includes('Para guardar capturas en producción') ||
