@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+import { loadBundledV1AndExecutive, isServerlessFilesystem } from './bundledPanelSeed';
 import { rebuildAnalisisRowsFromDatos } from './analisisFromDatos';
 import { rebuildExecutiveFromDatosRows } from './rebuildExecutiveFromDatos';
 import type { ExecutiveData } from './executive';
@@ -13,33 +14,13 @@ const EXEC_PATH = path.join(process.cwd(), 'data', 'sadama_amadeus_executive.jso
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Runtime serverless / producción con filesystem de solo lectura (Vercel, Lambda, etc.). */
-function isReadOnlyDeployFilesystem() {
-  const cwd = process.cwd();
-  return (
-    process.env.VERCEL === '1' ||
-    Boolean(process.env.VERCEL_ENV) ||
-    Boolean(process.env.VERCEL_URL) ||
-    Boolean(process.env.LAMBDA_TASK_ROOT) ||
-    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
-    cwd.startsWith('/var/task')
-  );
-}
-
-/** Solo desarrollo local o servidor propio con disco persistente (ver CAPTURE_USE_LOCAL_FILES). */
-function canPersistToDataFiles() {
-  if (isReadOnlyDeployFilesystem()) return false;
-  if (process.env.NODE_ENV !== 'production') return true;
-  return process.env.CAPTURE_USE_LOCAL_FILES === '1';
-}
-
 function throwSupabaseRequired() {
   throw new Error(
     [
-      'Para guardar capturas en producción (Vercel/hosting) hace falta Supabase.',
+      'Para guardar capturas en Vercel hace falta Supabase.',
       'Variables: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL, y SUPABASE_SERVICE_ROLE_KEY.',
       'Crea la tabla `panelsdm_state` (archivo `supabase/migrations/` del repo) y redeploy.',
-      'En servidor propio con disco escribible puedes usar CAPTURE_USE_LOCAL_FILES=1 (no en Vercel).',
+      'Comprueba que el nombre de las variables sea exacto y que redeployaste después de guardarlas.',
     ].join(' '),
   );
 }
@@ -60,8 +41,19 @@ async function loadBaselineV1AndExec(): Promise<{ v1: SadamaAmadeusV1; execExist
   if (isSupabasePersistenceConfigured()) {
     const row = await loadPanelStateFromDb();
     if (row?.v1_json && row?.executive_json) {
-      return { v1: row.v1_json, execExisting: row.executive_json };
+      return {
+        v1: structuredClone(row.v1_json as SadamaAmadeusV1),
+        execExisting: structuredClone(row.executive_json as ExecutiveData),
+      };
     }
+    // Primera captura: semilla empaquetada (evita fs en /var/task).
+    const seeded = await loadBundledV1AndExecutive();
+    return { v1: seeded.v1, execExisting: seeded.executive };
+  }
+
+  if (isServerlessFilesystem()) {
+    const seeded = await loadBundledV1AndExecutive();
+    return { v1: seeded.v1, execExisting: seeded.executive };
   }
 
   const [v1Raw, execRaw] = await Promise.all([fs.readFile(V1_PATH, 'utf8'), fs.readFile(EXEC_PATH, 'utf8')]);
@@ -139,7 +131,7 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     return sortedRows;
   }
 
-  if (!canPersistToDataFiles()) {
+  if (isServerlessFilesystem()) {
     throwSupabaseRequired();
   }
 
