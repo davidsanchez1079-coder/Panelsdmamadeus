@@ -18,23 +18,30 @@ function isReadOnlyDeployFilesystem() {
   const cwd = process.cwd();
   return (
     process.env.VERCEL === '1' ||
+    Boolean(process.env.VERCEL_ENV) ||
+    Boolean(process.env.VERCEL_URL) ||
     Boolean(process.env.LAMBDA_TASK_ROOT) ||
     Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
     cwd.startsWith('/var/task')
   );
 }
 
-function assertLocalFsPersistAllowed() {
-  if (isReadOnlyDeployFilesystem()) {
-    throw new Error(
-      [
-        'Este entorno no permite escribir archivos en `data/` (filesystem de solo lectura; ruta típica /var/task).',
-        'Configura: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY;',
-        'crea la tabla `panelsdm_state` (ver `supabase/migrations/`) y vuelve a desplegar el último commit.',
-        'Comprueba que el deploy ya no esté en una versión antigua del código.',
-      ].join(' '),
-    );
-  }
+/** Solo desarrollo local o servidor propio con disco persistente (ver CAPTURE_USE_LOCAL_FILES). */
+function canPersistToDataFiles() {
+  if (isReadOnlyDeployFilesystem()) return false;
+  if (process.env.NODE_ENV !== 'production') return true;
+  return process.env.CAPTURE_USE_LOCAL_FILES === '1';
+}
+
+function throwSupabaseRequired() {
+  throw new Error(
+    [
+      'Para guardar capturas en producción (Vercel/hosting) hace falta Supabase.',
+      'Variables: SUPABASE_URL o NEXT_PUBLIC_SUPABASE_URL, y SUPABASE_SERVICE_ROLE_KEY.',
+      'Crea la tabla `panelsdm_state` (archivo `supabase/migrations/` del repo) y redeploy.',
+      'En servidor propio con disco escribible puedes usar CAPTURE_USE_LOCAL_FILES=1 (no en Vercel).',
+    ].join(' '),
+  );
 }
 
 function sortDatosRows(rows: DatosRow[]): DatosRow[] {
@@ -132,7 +139,9 @@ export async function persistDatosRow(row: DatosRow, fechaToRemove?: string): Pr
     return sortedRows;
   }
 
-  assertLocalFsPersistAllowed();
+  if (!canPersistToDataFiles()) {
+    throwSupabaseRequired();
+  }
 
   const jsonOpts = 2;
   await fs.writeFile(V1_PATH, `${JSON.stringify(v1, null, jsonOpts)}\n`);

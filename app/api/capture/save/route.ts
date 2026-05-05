@@ -22,6 +22,8 @@ export async function POST(req: Request) {
     const msg = e instanceof Error ? e.message : String(e);
     const status =
       msg.includes('No se puede guardar en archivos dentro del deploy') ||
+      msg.includes('Para guardar capturas en producción') ||
+      msg.includes('hace falta Supabase') ||
       msg.includes('EROFS') ||
       msg.toLowerCase().includes('read-only file system')
         ? 501
