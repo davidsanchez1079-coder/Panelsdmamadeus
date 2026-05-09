@@ -42,6 +42,7 @@ function NumField({
   onChange,
   highlight = null,
   onPaste,
+  datoAnterior,
 }: {
   id: string;
   label: string;
@@ -49,6 +50,8 @@ function NumField({
   onChange: (v: string) => void;
   highlight?: 'copied' | 'modified' | null;
   onPaste?: () => void;
+  /** Texto ya formateado para mostrar bajo la etiqueta (p. ej. monto en MXN o —). */
+  datoAnterior?: string;
 }) {
   const onBlurNormalize = () => {
     if (value.trim() === '') return;
@@ -62,6 +65,12 @@ function NumField({
       <label htmlFor={id} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
         {label}
       </label>
+      {datoAnterior !== undefined ? (
+        <p className="text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+          <span className="font-medium text-zinc-600 dark:text-zinc-300">Dato anterior:</span>{' '}
+          <span className="tabular-nums">{datoAnterior}</span>
+        </p>
+      ) : null}
       <input
         id={id}
         type="text"
@@ -84,6 +93,7 @@ function TextField({
   onChange,
   highlight = null,
   onPaste,
+  datoAnterior,
 }: {
   id: string;
   label: string;
@@ -91,12 +101,19 @@ function TextField({
   onChange: (v: string) => void;
   highlight?: 'copied' | 'modified' | null;
   onPaste?: () => void;
+  datoAnterior?: string;
 }) {
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
         {label}
       </label>
+      {datoAnterior !== undefined ? (
+        <p className="text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+          <span className="font-medium text-zinc-600 dark:text-zinc-300">Dato anterior:</span>{' '}
+          <span className="break-words">{datoAnterior}</span>
+        </p>
+      ) : null}
       <input
         id={id}
         type="text"
@@ -189,6 +206,28 @@ function otrosH(
 
 function fmtMx(n: number) {
   return new Intl.NumberFormat('es-MX', { maximumFractionDigits: 0 }).format(n);
+}
+
+function fmtDatoAnteriorMonto(valueStr: string): string {
+  const t = valueStr.trim();
+  if (t === '') return '—';
+  const n = parseMoney(t);
+  if (!Number.isFinite(n)) return '—';
+  if (n === 0) return '$0';
+  return `$${fmtMx(n)}`;
+}
+
+function fmtDatoAnteriorTc(valueStr: string): string {
+  const t = valueStr.trim();
+  if (t === '') return '—';
+  const n = parseMoney(t);
+  if (!Number.isFinite(n)) return '—';
+  return new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 6 }).format(n);
+}
+
+function fmtDatoAnteriorTexto(valueStr: string): string {
+  const t = valueStr.trim();
+  return t === '' ? '—' : t;
 }
 
 export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
@@ -303,6 +342,12 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
     }
     return best;
   }, [uniqueRowsByDate, fecha]);
+
+  /** Cadenas del formulario para el registro anterior (misma forma que al copiar día anterior). */
+  const previousForm = useMemo(() => {
+    if (!previousRowForMontos) return null;
+    return captureStringsFromDatosRow(previousRowForMontos);
+  }, [previousRowForMontos]);
 
   useEffect(() => {
     setFecha(format(new Date(), 'yyyy-MM-dd'));
@@ -485,6 +530,17 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
               El tipo de cambio se rellena con el último TC conocido para esa fecha; si no hay dato exacto, con el
               registro más reciente con fecha ≤ a la elegida.
             </p>
+            {fecha && previousRowForMontos ? (
+              <p className="text-[11px] text-zinc-600 dark:text-zinc-300">
+                <span className="font-medium">Dato anterior</span> en cada campo = valor guardado en el último registro
+                con fecha anterior ({previousRowForMontos.fecha}). Así puedes comparar mientras capturas.
+              </p>
+            ) : fecha && !previousRowForMontos ? (
+              <p className="text-[11px] text-amber-800 dark:text-amber-200/90">
+                No hay registro con fecha anterior a {fecha}; los campos muestran «Dato anterior: —» hasta que exista
+                historial.
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs lg:ml-auto">
             {editingOriginalFecha ? (
@@ -520,6 +576,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="s-banco"
               label="Banco"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.sadama.banco ?? '')}
               value={sadama.banco}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'banco')}
               onPaste={() => markTouched('sadama.banco')}
@@ -532,6 +589,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="s-inv"
               label="Inventarios"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.sadama.inventarios ?? '')}
               value={sadama.inventarios}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'inventarios')}
               onPaste={() => markTouched('sadama.inventarios')}
@@ -544,6 +602,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="s-cxc"
               label="CXC"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.sadama.cxc ?? '')}
               value={sadama.cxc}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxc')}
               onPaste={() => markTouched('sadama.cxc')}
@@ -556,6 +615,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="s-cxp"
               label="CXP (Sadama)"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.sadama.cxp ?? '')}
               value={sadama.cxp}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'cxp')}
               onPaste={() => markTouched('sadama.cxp')}
@@ -568,6 +628,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="s-fact"
               label="Fact. día mes"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.sadama.fact_dia_mes ?? '')}
               value={sadama.fact_dia_mes}
               highlight={sadamaH(montosCopyBaseline, montosTouched, sadama, 'fact_dia_mes')}
               onPaste={() => markTouched('sadama.fact_dia_mes')}
@@ -588,6 +649,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-inv"
               label="Inventarios"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.inventarios ?? '')}
               value={amadeus.inventarios}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'inventarios')}
               onPaste={() => markTouched('amadeus.inventarios')}
@@ -600,6 +662,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-cxc"
               label="CXC"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.cxc ?? '')}
               value={amadeus.cxc}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'cxc')}
               onPaste={() => markTouched('amadeus.cxc')}
@@ -612,6 +675,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-fact"
               label="Fact. día / mes"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.fact_dia_mes ?? '')}
               value={amadeus.fact_dia_mes}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'fact_dia_mes')}
               onPaste={() => markTouched('amadeus.fact_dia_mes')}
@@ -624,6 +688,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-comp"
               label="Compras mes"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.compras_mes ?? '')}
               value={amadeus.compras_mes}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'compras_mes')}
               onPaste={() => markTouched('amadeus.compras_mes')}
@@ -641,6 +706,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-sand"
               label="Sandvik"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.sandvik ?? '')}
               value={amadeus.sandvik}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'sandvik')}
               onPaste={() => markTouched('amadeus.sandvik')}
@@ -653,6 +719,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-varg"
               label="Vargus"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.vargus ?? '')}
               value={amadeus.vargus}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'vargus')}
               onPaste={() => markTouched('amadeus.vargus')}
@@ -665,6 +732,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-mex"
               label="Mexicana"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.mexicana ?? '')}
               value={amadeus.mexicana}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'mexicana')}
               onPaste={() => markTouched('amadeus.mexicana')}
@@ -677,6 +745,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-sadama-cxp-line"
               label="Sadama"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.probadores_sadama ?? '')}
               value={amadeus.probadores_sadama}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'probadores_sadama')}
               onPaste={() => markTouched('amadeus.probadores_sadama')}
@@ -696,6 +765,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                 <NumField
                   id={`a-otr-${i}-monto`}
                   label={`Otros ${i + 1} · monto`}
+                  datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.otros_lineas[i]?.monto ?? '')}
                   value={amadeus.otros_lineas[i]!.monto}
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'monto')}
                   onPaste={() => markTouched(`amadeus.otros_lineas.${i}.monto`)}
@@ -711,6 +781,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
                 <TextField
                   id={`a-otr-${i}-prov`}
                   label={`Otros ${i + 1} · proveedor`}
+                  datoAnterior={fmtDatoAnteriorTexto(previousForm?.amadeus.otros_lineas[i]?.proveedor ?? '')}
                   value={amadeus.otros_lineas[i]!.proveedor}
                   highlight={otrosH(montosCopyBaseline, montosTouched, amadeus, i, 'proveedor')}
                   onPaste={() => markTouched(`amadeus.otros_lineas.${i}.proveedor`)}
@@ -731,6 +802,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-usd"
               label="Bajío USD"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.bajio_usd ?? '')}
               value={amadeus.bajio_usd}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_usd')}
               onPaste={() => markTouched('amadeus.bajio_usd')}
@@ -743,6 +815,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-mxn"
               label="Bajío MXN"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.bajio_mxn ?? '')}
               value={amadeus.bajio_mxn}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'bajio_mxn')}
               onPaste={() => markTouched('amadeus.bajio_mxn')}
@@ -755,6 +828,7 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <NumField
               id="a-hsbc"
               label="HSBC"
+              datoAnterior={fmtDatoAnteriorMonto(previousForm?.amadeus.hsbc ?? '')}
               value={amadeus.hsbc}
               highlight={amadeusScalarH(montosCopyBaseline, montosTouched, amadeus, 'hsbc')}
               onPaste={() => markTouched('amadeus.hsbc')}
@@ -773,6 +847,10 @@ export function CaptureClient({ initialRows }: { initialRows: unknown[] }) {
             <label htmlFor="cap-tc" className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
               Tipo de cambio (día de registro)
             </label>
+            <p className="text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
+              <span className="font-medium text-zinc-600 dark:text-zinc-300">Dato anterior:</span>{' '}
+              <span className="tabular-nums">{fmtDatoAnteriorTc(previousForm?.tc ?? '')}</span>
+            </p>
             <input
               id="cap-tc"
               type="text"

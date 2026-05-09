@@ -1,6 +1,7 @@
 'use client';
 
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { format, isValid, parseISO, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -47,11 +48,13 @@ import {
 import type { ExecutiveViewModel, YoYDelta } from '@/lib/executive';
 import type { JsonMeta } from '@/lib/types';
 import { formatMXN, formatMXNAxis, formatPct } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DashboardChartFilters } from '@/components/executive/DashboardChartFilters';
 import { ExecutiveSwitch, type ExecutiveMode } from '@/components/executive/ExecutiveSwitch';
 import { ThemeToggle } from '@/components/executive/ThemeToggle';
 import { HeroFlujoBanner } from '@/components/executive/HeroFlujoBanner';
+import { ChartStructureInfoButton } from '@/components/executive/ChartStructureInfoButton';
 import { ExecKPICard, type SparkTriplePoint } from '@/components/executive/ExecKPICard';
 import { AlertsBanner } from '@/components/executive/AlertsBanner';
 import { ChartDataTable } from '@/components/executive/ChartDataTable';
@@ -94,12 +97,17 @@ function buildSparkTripleFromChartRows(rows: ChartRow[], kpiKey: KpiSparkKey): S
 
 type ChartTooltipProps = {
   active?: boolean;
-  payload?: ReadonlyArray<{ payload?: unknown; name?: string; value?: unknown; dataKey?: unknown }>;
+  payload?: ReadonlyArray<{ payload?: unknown; name?: string | number; value?: unknown; dataKey?: unknown }>;
 };
 
-function TooltipShell({ children }: { children: ReactNode }) {
+function TooltipShell({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className="max-w-[240px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 shadow-lg dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50">
+    <div
+      className={cn(
+        'max-w-[240px] rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 shadow-lg dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50',
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -114,22 +122,23 @@ const PIE_FILLS = [
 ] as const;
 
 const axisTick = { fontSize: 10, fill: 'var(--chart-tick)' };
+const axisTickLg = { fontSize: 12, fill: 'var(--chart-tick)' };
 
-function FlujoTooltip({ active, payload }: ChartTooltipProps) {
+function FlujoTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: boolean }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload as { bucketEnd?: string } | undefined;
   if (!row?.bucketEnd) return null;
   const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
   return (
-    <TooltipShell>
+    <TooltipShell className={wide ? 'max-w-[min(92vw,440px)] px-3.5 py-2.5 text-sm' : undefined}>
       <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
       <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
       <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Flujo (MXN)</div>
-      <ul className="mt-1 space-y-1 text-xs">
+      <ul className={cn('mt-1 space-y-1', wide ? 'space-y-1.5 text-sm' : 'text-xs')}>
         {items.map((p) => (
-          <li key={String(p.dataKey)} className="flex justify-between gap-3 tabular-nums">
+          <li key={String(p.dataKey)} className="flex justify-between gap-4 tabular-nums">
             <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
-            <span>{formatMXN(p.value as number)}</span>
+            <span className="font-medium">{formatMXN(p.value as number)}</span>
           </li>
         ))}
       </ul>
@@ -137,21 +146,21 @@ function FlujoTooltip({ active, payload }: ChartTooltipProps) {
   );
 }
 
-function InventarioTooltip({ active, payload }: ChartTooltipProps) {
+function InventarioTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: boolean }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload as { bucketEnd?: string } | undefined;
   if (!row?.bucketEnd) return null;
   const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
   return (
-    <TooltipShell>
+    <TooltipShell className={wide ? 'max-w-[min(92vw,440px)] px-3.5 py-2.5 text-sm' : undefined}>
       <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
       <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
       <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Inventario (MXN)</div>
-      <ul className="mt-1 space-y-1 text-xs">
+      <ul className={cn('mt-1 space-y-1', wide ? 'space-y-1.5 text-sm' : 'text-xs')}>
         {items.map((p) => (
-          <li key={String(p.dataKey)} className="flex justify-between gap-3 tabular-nums">
+          <li key={String(p.dataKey)} className="flex justify-between gap-4 tabular-nums">
             <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
-            <span>{formatMXN(p.value as number)}</span>
+            <span className="font-medium">{formatMXN(p.value as number)}</span>
           </li>
         ))}
       </ul>
@@ -162,22 +171,22 @@ function InventarioTooltip({ active, payload }: ChartTooltipProps) {
 type PieTooltipProps = {
   active?: boolean;
   payload?: ReadonlyArray<{
-    name?: string;
+    name?: string | number;
     value?: number;
     payload?: { name?: string; value?: number; pct?: number; fill?: string };
   }>;
 };
 
-function CxpPieTooltip({ active, payload }: PieTooltipProps) {
+function CxpPieTooltip({ active, payload, wide }: PieTooltipProps & { wide?: boolean }) {
   if (!active || !payload?.length) return null;
   const item = payload[0]!;
   const name = (item.payload?.name ?? item.name) as string;
   const value = (typeof item.value === 'number' ? item.value : item.payload?.value) as number;
   const pct = item.payload?.pct;
   return (
-    <TooltipShell>
-      <div className="text-sm font-semibold leading-tight">{name}</div>
-      <div className="mt-1 text-sm font-medium tabular-nums">{formatMXN(value)}</div>
+    <TooltipShell className={wide ? 'max-w-[min(92vw,400px)] px-3.5 py-2.5' : undefined}>
+      <div className={cn('font-semibold leading-tight', wide ? 'text-base' : 'text-sm')}>{name}</div>
+      <div className={cn('mt-1 font-medium tabular-nums', wide ? 'text-base' : 'text-sm')}>{formatMXN(value)}</div>
       {pct != null && Number.isFinite(pct) ? (
         <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           {formatPct(pct)} del total CXP
@@ -187,7 +196,7 @@ function CxpPieTooltip({ active, payload }: PieTooltipProps) {
   );
 }
 
-function BancosTooltip({ active, payload }: ChartTooltipProps) {
+function BancosTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: boolean }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload as
     | {
@@ -200,23 +209,65 @@ function BancosTooltip({ active, payload }: ChartTooltipProps) {
     | undefined;
   if (!row?.bucketEnd) return null;
   return (
-    <TooltipShell>
+    <TooltipShell className={wide ? 'max-w-[min(92vw,440px)] px-3.5 py-2.5 text-sm' : undefined}>
       <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
       <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
-      <ul className="mt-2 space-y-1 text-xs">
+      <ul className={cn('mt-2 space-y-1', wide ? 'space-y-1.5 text-sm' : 'text-xs')}>
         {payload
           .filter((p) => p.name && typeof p.value === 'number')
           .map((p) => (
-            <li key={String(p.dataKey)} className="flex justify-between gap-3 tabular-nums">
+            <li key={String(p.dataKey)} className="flex justify-between gap-4 tabular-nums">
               <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
-              <span>{formatMXN(p.value as number)}</span>
+              <span className="font-medium">{formatMXN(p.value as number)}</span>
             </li>
           ))}
       </ul>
-      <div className="mt-2 border-t border-zinc-200 pt-2 text-xs font-semibold tabular-nums dark:border-zinc-700">
-        Total bancos: {formatMXN(row.total)}
+      <div
+        className={cn(
+          'mt-2 border-t border-zinc-200 pt-2 font-semibold tabular-nums dark:border-zinc-700',
+          wide ? 'text-sm' : 'text-xs',
+        )}
+      >
+        Total bancos: {formatMXN(row.total ?? 0)}
       </div>
     </TooltipShell>
+  );
+}
+
+type ExecutiveExpandedChart = 'facturacion' | 'flujo' | 'bancos' | 'cxp' | 'inventario';
+
+function ChartExpandIconButton({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      title={label}
+      aria-label={label}
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="17"
+        height="17"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M15 3h6v6" />
+        <path d="M9 21H3v-6" />
+        <path d="M21 3l-7 7" />
+        <path d="M3 21l7-7" />
+      </svg>
+    </button>
   );
 }
 
@@ -231,6 +282,277 @@ function resumenFactYtdWithFallback(monthly: FacturacionMesRow[], asOfDay: strin
     yearActual: String(d.getFullYear()),
     yearAnterior: String(d.getFullYear() - 1),
   };
+}
+
+/** Porcentaje contextual (p. ej. “falta” como fracción del YTD año anterior), sin signo forzado. */
+function formatPctShare(n: number) {
+  return new Intl.NumberFormat('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n) + '%';
+}
+
+type FacturacionYtdBrecha =
+  | {
+      kind: 'behind';
+      faltaMxn: number;
+      pctDelYtdAnterior: number | null;
+      yearActual: string;
+      yearAnterior: string;
+    }
+  | {
+      kind: 'ahead';
+      sobreMxn: number;
+      pctDelYtdAnterior: number | null;
+      yearActual: string;
+      yearAnterior: string;
+    }
+  | { kind: 'equal'; yearActual: string; yearAnterior: string };
+
+function facturacionYtdBrechaVsAnterior(
+  resumen: { ytdActual: number; ytdAnterior: number; yearActual: string; yearAnterior: string } | null | undefined,
+): FacturacionYtdBrecha | null {
+  if (!resumen) return null;
+  const { ytdActual, ytdAnterior, yearActual, yearAnterior } = resumen;
+  if (!Number.isFinite(ytdActual) || !Number.isFinite(ytdAnterior)) return null;
+
+  const scale = Math.max(Math.abs(ytdActual), Math.abs(ytdAnterior), 1);
+  const near = Math.abs(ytdActual - ytdAnterior) <= scale * 1e-9 || Math.abs(ytdActual - ytdAnterior) < 1;
+  if (near) return { kind: 'equal', yearActual, yearAnterior };
+
+  if (ytdAnterior > 0) {
+    if (ytdActual < ytdAnterior) {
+      const falta = ytdAnterior - ytdActual;
+      return {
+        kind: 'behind',
+        faltaMxn: falta,
+        pctDelYtdAnterior: (falta / ytdAnterior) * 100,
+        yearActual,
+        yearAnterior,
+      };
+    }
+    const sobre = ytdActual - ytdAnterior;
+    return {
+      kind: 'ahead',
+      sobreMxn: sobre,
+      pctDelYtdAnterior: (sobre / ytdAnterior) * 100,
+      yearActual,
+      yearAnterior,
+    };
+  }
+
+  if (ytdActual > ytdAnterior) {
+    return {
+      kind: 'ahead',
+      sobreMxn: ytdActual - ytdAnterior,
+      pctDelYtdAnterior: null,
+      yearActual,
+      yearAnterior,
+    };
+  }
+  return {
+    kind: 'behind',
+    faltaMxn: ytdAnterior - ytdActual,
+    pctDelYtdAnterior: null,
+    yearActual,
+    yearAnterior,
+  };
+}
+
+function FacturacionYtdBrechaCallout({
+  brecha,
+  className,
+}: {
+  brecha: FacturacionYtdBrecha | null;
+  className?: string;
+}) {
+  if (!brecha) return null;
+
+  if (brecha.kind === 'equal') {
+    return (
+      <p
+        className={cn(
+          'rounded-lg border border-zinc-200/90 bg-zinc-50/90 px-3 py-2 text-sm leading-snug text-zinc-800 dark:border-zinc-600/60 dark:bg-zinc-900/40 dark:text-zinc-200',
+          className,
+        )}
+      >
+        La facturación total acumulada (YTD {brecha.yearActual}, mismo lapso ene → mes de corte) va{' '}
+        <span className="font-medium">alineada</span> con el YTD {brecha.yearAnterior} en ese lapso.
+      </p>
+    );
+  }
+
+  if (brecha.kind === 'behind') {
+    return (
+      <p
+        className={cn(
+          'rounded-lg border border-amber-200/90 bg-amber-50/90 px-3 py-2 text-sm leading-snug text-amber-950 dark:border-amber-400/30 dark:bg-amber-950/35 dark:text-amber-100/95',
+          className,
+        )}
+      >
+        Para igualar el YTD {brecha.yearAnterior} de facturación total (Sadama + Amadeus) en el mismo lapso,{' '}
+        <span className="font-semibold tabular-nums">faltan {formatMXN(brecha.faltaMxn)}</span>
+        {brecha.pctDelYtdAnterior != null ? (
+          <>
+            {' '}
+            (<span className="tabular-nums font-medium">{formatPctShare(brecha.pctDelYtdAnterior)}</span> del YTD{' '}
+            {brecha.yearAnterior})
+          </>
+        ) : null}
+        .
+      </p>
+    );
+  }
+
+  return (
+    <p
+      className={cn(
+        'rounded-lg border border-emerald-200/90 bg-emerald-50/90 px-3 py-2 text-sm leading-snug text-emerald-950 dark:border-emerald-400/30 dark:bg-emerald-950/40 dark:text-emerald-100/95',
+        className,
+      )}
+    >
+      Respecto al YTD {brecha.yearAnterior} (mismo lapso), la facturación total {brecha.yearActual} va{' '}
+      <span className="font-semibold tabular-nums">{formatMXN(brecha.sobreMxn)} por encima</span>
+      {brecha.pctDelYtdAnterior != null ? (
+        <>
+          {' '}
+          (<span className="tabular-nums font-medium">{formatPct(brecha.pctDelYtdAnterior)}</span> sobre el YTD{' '}
+          {brecha.yearAnterior})
+        </>
+      ) : null}
+      .
+    </p>
+  );
+}
+
+/** Meta de planeación comunicada al equipo: +20% de facturación vs el mismo lapso del año anterior (YTD). */
+const FACTURACION_PLAN_CRECC_YOY = 0.2;
+
+/** Colchón superior del eje Y en la gráfica YTD de facturación (MXN): tope = máx. de las tres series + este monto. */
+const FACTURACION_YTD_AXIS_TOP_PAD_MXN = 2_000_000;
+
+type FacturacionVsObjetivo20 =
+  | {
+      kind: 'below';
+      faltaMxn: number;
+      pctDelObjetivo: number | null;
+      ytdObjetivo: number;
+      yearActual: string;
+      yearAnterior: string;
+    }
+  | {
+      kind: 'above';
+      sobreMxn: number;
+      pctDelObjetivo: number | null;
+      ytdObjetivo: number;
+      yearActual: string;
+      yearAnterior: string;
+    }
+  | { kind: 'equal'; ytdObjetivo: number; yearActual: string; yearAnterior: string };
+
+function facturacionYtdVsObjetivo20(
+  resumen: { ytdActual: number; ytdAnterior: number; yearActual: string; yearAnterior: string } | null | undefined,
+): FacturacionVsObjetivo20 | null {
+  if (!resumen) return null;
+  const { ytdActual, ytdAnterior, yearActual, yearAnterior } = resumen;
+  if (!Number.isFinite(ytdActual) || !Number.isFinite(ytdAnterior)) return null;
+  const ytdObjetivo = ytdAnterior * (1 + FACTURACION_PLAN_CRECC_YOY);
+  const diff = ytdActual - ytdObjetivo;
+  const scale = Math.max(Math.abs(ytdActual), Math.abs(ytdObjetivo), 1);
+  if (Math.abs(diff) <= scale * 1e-9 || Math.abs(diff) < 1) {
+    return { kind: 'equal', ytdObjetivo, yearActual, yearAnterior };
+  }
+  if (ytdObjetivo > 0) {
+    if (diff < 0) {
+      const falta = ytdObjetivo - ytdActual;
+      return {
+        kind: 'below',
+        faltaMxn: falta,
+        pctDelObjetivo: (falta / ytdObjetivo) * 100,
+        ytdObjetivo,
+        yearActual,
+        yearAnterior,
+      };
+    }
+    const sobre = ytdActual - ytdObjetivo;
+    return {
+      kind: 'above',
+      sobreMxn: sobre,
+      pctDelObjetivo: (sobre / ytdObjetivo) * 100,
+      ytdObjetivo,
+      yearActual,
+      yearAnterior,
+    };
+  }
+  if (diff > 0) {
+    return {
+      kind: 'above',
+      sobreMxn: diff,
+      pctDelObjetivo: null,
+      ytdObjetivo,
+      yearActual,
+      yearAnterior,
+    };
+  }
+  return {
+    kind: 'below',
+    faltaMxn: -diff,
+    pctDelObjetivo: null,
+    ytdObjetivo,
+    yearActual,
+    yearAnterior,
+  };
+}
+
+function FacturacionObjetivo20Callout({
+  data,
+  className,
+}: {
+  data: FacturacionVsObjetivo20 | null;
+  className?: string;
+}) {
+  if (!data) return null;
+  const pctMeta = Math.round(FACTURACION_PLAN_CRECC_YOY * 100);
+  return (
+    <p
+      className={cn(
+        'rounded-lg border border-violet-200/90 bg-violet-50/90 px-3 py-2 text-sm leading-snug text-violet-950 dark:border-violet-400/35 dark:bg-violet-950/40 dark:text-violet-100/95',
+        className,
+      )}
+    >
+      <span className="font-medium">Objetivo planteado:</span> facturación total{' '}
+      <span className="font-semibold tabular-nums">+{pctMeta}%</span> vs el YTD {data.yearAnterior} en el mismo lapso (ene → mes de
+      corte). <span className="font-medium">Meta acumulada a la fecha:</span>{' '}
+      <span className="font-semibold tabular-nums">{formatMXN(data.ytdObjetivo)}</span>.
+      {data.kind === 'below' ? (
+        <>
+          {' '}
+          Van <span className="font-semibold tabular-nums">{formatMXN(data.faltaMxn)}</span> por debajo de esa meta
+          {data.pctDelObjetivo != null ? (
+            <>
+              {' '}
+              (<span className="tabular-nums font-medium">{formatPctShare(data.pctDelObjetivo)}</span> del monto objetivo)
+            </>
+          ) : null}
+          .
+        </>
+      ) : data.kind === 'above' ? (
+        <>
+          {' '}
+          Superan la meta por <span className="font-semibold tabular-nums">{formatMXN(data.sobreMxn)}</span>
+          {data.pctDelObjetivo != null ? (
+            <>
+              {' '}
+              (<span className="tabular-nums font-medium">{formatPct(data.pctDelObjetivo)}</span> sobre el objetivo)
+            </>
+          ) : null}
+          .
+        </>
+      ) : (
+        <>
+          {' '}
+          Coinciden con la meta de +{pctMeta}% sobre el YTD {data.yearAnterior}.
+        </>
+      )}
+    </p>
+  );
 }
 
 export function ExecutiveClient({
@@ -262,6 +584,7 @@ export function ExecutiveClient({
   const [granularity, setGranularity] = useState<ChartGranularity>('auto');
   const [customRange, setCustomRange] = useState<ChartCustomDateRange>({ start: '', end: '' });
   const [facturacionVista, setFacturacionVista] = useState<'mes_vs_mes' | 'ytd_anios'>('ytd_anios');
+  const [expandedChart, setExpandedChart] = useState<ExecutiveExpandedChart | null>(null);
 
   const onRangePresetChange = (v: ChartRangePreset) => {
     setRangePreset(v);
@@ -279,6 +602,24 @@ export function ExecutiveClient({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!expandedChart) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpandedChart(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expandedChart]);
+
+  useEffect(() => {
+    if (!expandedChart) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [expandedChart]);
 
   const source = mode === 'last_month' ? view.lastMonth : view.ytd.comparativo;
   const yoy = source.yoy;
@@ -391,13 +732,29 @@ export function ExecutiveClient({
     return ((actual.totalFacturacionMes - anterior.totalFacturacionMes) / anterior.totalFacturacionMes) * 100;
   }, [mesVsPair]);
   const ytdFactSeries = useMemo(
-    () => ytdComparativaAnioVsAnioAnterior(monthlyFactAmadeus, asOfDay),
-    [monthlyFactAmadeus, asOfDay],
+    () => ytdComparativaAnioVsAnioAnterior(monthlyFactCombinada, asOfDay),
+    [monthlyFactCombinada, asOfDay],
   );
   const ytdYears = useMemo(() => {
     const y = parseISO(asOfDay).getFullYear();
     return { actual: String(y), anterior: String(y - 1) };
   }, [asOfDay]);
+  const ytdFactSeriesChart = useMemo(
+    () =>
+      ytdFactSeries.map((r) => ({
+        ...r,
+        ytdObjetivo20: r.ytdAnioAnterior * (1 + FACTURACION_PLAN_CRECC_YOY),
+      })),
+    [ytdFactSeries],
+  );
+  const ytdFactChartYAxisMax = useMemo(() => {
+    if (ytdFactSeriesChart.length === 0) return undefined;
+    let peak = 0;
+    for (const r of ytdFactSeriesChart) {
+      peak = Math.max(peak, r.ytdAnioActual, r.ytdAnioAnterior, r.ytdObjetivo20);
+    }
+    return peak + FACTURACION_YTD_AXIS_TOP_PAD_MXN;
+  }, [ytdFactSeriesChart]);
 
   const resumenFactTotal = useMemo(
     () => resumenFactYtdWithFallback(monthlyFactCombinada, asOfDay),
@@ -411,6 +768,14 @@ export function ExecutiveClient({
     () => resumenFactYtdWithFallback(monthlyFactAmadeus, asOfDay),
     [monthlyFactAmadeus, asOfDay],
   );
+  const facturacionBrechaYtd = useMemo(
+    () => facturacionYtdBrechaVsAnterior(resumenFactTotal),
+    [resumenFactTotal],
+  );
+  const facturacionVsObjetivo20 = useMemo(
+    () => facturacionYtdVsObjetivo20(resumenFactTotal),
+    [resumenFactTotal],
+  );
 
   const onExportPdf = () => {
     window.print();
@@ -418,6 +783,7 @@ export function ExecutiveClient({
 
   const showChartBrush = chartRows.length > 6;
   const chartPlotHeight = showChartBrush ? 292 : 248;
+  const fullscreenChartHeight = 'min(58vh, 580px)';
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-5">
@@ -529,7 +895,6 @@ export function ExecutiveClient({
               value={value}
               deltaPct={deltaPct}
               sparkTriple={sparkTriple}
-              href={`/?kpi=${key}`}
               showChart={mounted}
             />
           );
@@ -538,19 +903,34 @@ export function ExecutiveClient({
 
       <div className="dashboard-panel mt-4 rounded-xl border border-border bg-background p-4">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold">Facturación total (Sadama + Amadeus)</div>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Misma base que los héroes de facturación YTD: <span className="font-medium">Sadama + Amadeus</span> por mes, último registro ≤ corte.
-              Los JSON <span className="font-medium">data/amadeus_monto_neto_mensual.json</span> y{' '}
-              <span className="font-medium">data/sadama_monto_neto_mensual.json</span> sustituyen el MTD de captura cuando existen.
-              Los gráficos <span className="font-medium">mes vs mes</span> y <span className="font-medium">YTD año vs año</span> usan este total combinado.
-              Corte operativo (México):{' '}
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
-              </span>
-              .
-            </p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold">Facturación total (Sadama + Amadeus)</div>
+              <ChartExpandIconButton
+                onClick={() => setExpandedChart('facturacion')}
+                label="Ampliar gráfica de facturación"
+              />
+              <ChartStructureInfoButton
+                panelTitle="Cálculo y estructura de la gráfica de facturación total"
+                className="max-w-full"
+              >
+                <p>
+                  Misma base que los héroes de facturación YTD: <span className="font-medium">Sadama + Amadeus</span> por mes; en cada mes se toma el
+                  último registro con fecha ≤ corte (campos <span className="font-medium">Fact. día / mes</span> = MTD del mes). El{' '}
+                  <span className="font-medium">mes del corte</span> se va actualizando con cada captura; los JSON{' '}
+                  <span className="font-medium">data/amadeus_monto_neto_mensual.json</span> y{' '}
+                  <span className="font-medium">data/sadama_monto_neto_mensual.json</span> solo sustituyen meses anteriores al de cierre (cierre oficial).
+                  Los gráficos <span className="font-medium">mes vs mes</span> y <span className="font-medium">YTD año vs año</span> usan este total
+                  combinado. En <span className="font-medium">YTD</span>, la línea punteada naranja es la meta <span className="font-medium">+20%</span>{' '}
+                  sobre el acumulado del año anterior en cada mes. El eje vertical llega hasta el máximo de las tres series más 2&nbsp;M&nbsp;MXN de margen.
+                  Corte operativo (México):{' '}
+                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                    {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
+                  </span>
+                  .
+                </p>
+              </ChartStructureInfoButton>
+            </div>
             {resumenFactTotal ? (
               <p className="mt-2 text-sm tabular-nums text-zinc-800 dark:text-zinc-100">
                 YTD total {resumenFactTotal.yearActual}:{' '}
@@ -570,6 +950,8 @@ export function ExecutiveClient({
                 <span className="font-medium text-zinc-800 dark:text-zinc-200">{formatMXN(resumenFactAmadeus.ytdActual)}</span>
               </p>
             ) : null}
+            <FacturacionYtdBrechaCallout brecha={facturacionBrechaYtd} className="mt-2" />
+            <FacturacionObjetivo20Callout data={facturacionVsObjetivo20} className="mt-2" />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -651,19 +1033,25 @@ export function ExecutiveClient({
           <div className="chart-root h-[260px] w-full text-foreground">
             {mounted ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={ytdFactSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <LineChart data={ytdFactSeriesChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                   <XAxis dataKey="label" tick={axisTick} />
                   <YAxis
                     width={56}
                     tick={axisTick}
+                    domain={ytdFactChartYAxisMax != null ? [0, ytdFactChartYAxisMax] : undefined}
                     tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
                   />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
                       const row = payload[0]?.payload as
-                        | { label: string; ytdAnioActual: number; ytdAnioAnterior: number }
+                        | {
+                            label: string;
+                            ytdAnioActual: number;
+                            ytdAnioAnterior: number;
+                            ytdObjetivo20: number;
+                          }
                         | undefined;
                       if (!row) return null;
                       return (
@@ -677,6 +1065,10 @@ export function ExecutiveClient({
                             <li className="flex justify-between gap-4 tabular-nums">
                               <span>YTD {ytdYears.anterior}</span>
                               <span>{formatMXN(row.ytdAnioAnterior)}</span>
+                            </li>
+                            <li className="flex justify-between gap-4 tabular-nums">
+                              <span>Meta +20%</span>
+                              <span>{formatMXN(row.ytdObjetivo20)}</span>
                             </li>
                           </ul>
                         </TooltipShell>
@@ -700,6 +1092,15 @@ export function ExecutiveClient({
                     strokeWidth={2}
                     dot={{ r: 3 }}
                   />
+                  <Line
+                    type="monotone"
+                    dataKey="ytdObjetivo20"
+                    name={`Meta +20% vs ${ytdYears.anterior}`}
+                    stroke="var(--chart-line-objetivo-fact)"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             ) : null}
@@ -709,10 +1110,18 @@ export function ExecutiveClient({
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">Flujo (MXN) por fecha · Sadama, Amadeus y total</div>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Tres series consolidadas. Eje inferior: fecha de corte (dd/mm/aaaa). Pasa el mouse o usa la banda gris para acercar el rango.
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold">Flujo (MXN) por fecha · Sadama, Amadeus y total</div>
+              <ChartStructureInfoButton panelTitle="Estructura de la gráfica de flujo">
+                <p>
+                  Tres series consolidadas (Sadama, Amadeus y total). Eje inferior: fecha de corte (dd/mm/aaaa). Pasa el mouse sobre la gráfica o usa
+                  la banda gris (brush) para acercar el rango cuando hay muchos puntos.
+                </p>
+              </ChartStructureInfoButton>
+            </div>
+            <ChartExpandIconButton onClick={() => setExpandedChart('flujo')} label="Ampliar gráfica de flujo" />
+          </div>
           <div className="chart-root w-full text-foreground" style={{ height: chartPlotHeight }}>
             {mounted && flujoChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -805,10 +1214,22 @@ export function ExecutiveClient({
         </div>
 
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">Bancos (MXN) por cuenta y fecha</div>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Misma escala de fechas que arriba; tooltip con desglose y total por día o periodo.
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold">Bancos (MXN) por cuenta y fecha</div>
+              <ChartStructureInfoButton panelTitle="Estructura de la gráfica de bancos">
+                <p>
+                  Misma escala de fechas que flujo e inventario (filtros de alcance y agrupación). El tooltip muestra el desglose por cuenta y el total
+                  del día o periodo.
+                </p>
+                <p className="mt-2">
+                  Las áreas están <span className="font-medium">apiladas</span>; los montos están en MXN usando el tipo de cambio del día de cada
+                  captura.
+                </p>
+              </ChartStructureInfoButton>
+            </div>
+            <ChartExpandIconButton onClick={() => setExpandedChart('bancos')} label="Ampliar gráfica de bancos" />
+          </div>
           <div className="chart-root w-full text-foreground" style={{ height: chartPlotHeight }}>
             {mounted && bancosChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -877,7 +1298,6 @@ export function ExecutiveClient({
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">Sin datos en este alcance</div>
             )}
           </div>
-          <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Áreas apiladas; montos en MXN al tipo de cambio del día.</div>
           <ChartDataTable
             rows={bancosChart}
             caption="Totales y cuentas por fecha de corte (más reciente arriba)."
@@ -892,14 +1312,25 @@ export function ExecutiveClient({
         </div>
 
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">CXP por proveedor (último corte del período)</div>
-          {lastBucket ? (
-            <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Total CXP al corte{' '}
-              <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">{formatMXN(cxpVista.total)}</span>{' '}
-              · participación por proveedor en % sobre ese total.
-            </p>
-          ) : null}
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold">CXP por proveedor (último corte del período)</div>
+              {lastBucket ? (
+                <ChartStructureInfoButton panelTitle="Estructura de la gráfica de CXP">
+                  <p>
+                    Total CXP al corte seleccionado:{' '}
+                    <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{formatMXN(cxpVista.total)}</span>. Cada porción de la
+                    dona es la participación del proveedor en % sobre ese total.
+                  </p>
+                  <p className="mt-2">
+                    Basado en la fecha de corte <span className="font-medium tabular-nums">{lastBucket.bucketEnd}</span> (último bucket del filtro
+                    actual).
+                  </p>
+                </ChartStructureInfoButton>
+              ) : null}
+            </div>
+            <ChartExpandIconButton onClick={() => setExpandedChart('cxp')} label="Ampliar gráfica de CXP" />
+          </div>
           <div className="chart-root h-[240px] w-full text-foreground">
             {mounted && cxpVista.pie.some((s) => s.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -927,9 +1358,6 @@ export function ExecutiveClient({
               <div className="flex h-full items-center justify-center text-sm text-zinc-500">Sin datos en este alcance</div>
             )}
           </div>
-          {lastBucket ? (
-            <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Basado en fecha {lastBucket.bucketEnd}.</div>
-          ) : null}
           {lastBucket && cxpVista.rows.length > 0 ? (
             <div className="mt-3 rounded-md border border-zinc-200 dark:border-zinc-700">
               <table className="w-full border-collapse text-xs">
@@ -964,10 +1392,21 @@ export function ExecutiveClient({
         </div>
 
         <div className="dashboard-panel rounded-xl border border-border bg-background p-4">
-          <div className="mb-2 text-sm font-semibold">Inventario (MXN) por fecha · Sadama, Amadeus y total</div>
-          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-            Tres series (mismo criterio de color que flujo: Sadama / Amadeus / total). Eje: dd/mm/aaaa.
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="text-sm font-semibold">Inventario (MXN) por fecha · Sadama, Amadeus y total</div>
+              <ChartStructureInfoButton panelTitle="Estructura de la gráfica de inventario">
+                <p>
+                  Tres series con el mismo criterio de color que flujo: Sadama, Amadeus y total. Eje horizontal: fechas de corte (dd/mm/aaaa), alineadas
+                  con el alcance y la agrupación del panel superior.
+                </p>
+              </ChartStructureInfoButton>
+            </div>
+            <ChartExpandIconButton
+              onClick={() => setExpandedChart('inventario')}
+              label="Ampliar gráfica de inventario"
+            />
+          </div>
           <div className="chart-root w-full text-foreground" style={{ height: chartPlotHeight }}>
             {mounted && inventarioChart.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -1059,6 +1498,666 @@ export function ExecutiveClient({
           />
         </div>
       </div>
+
+      {expandedChart
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[300] flex items-center justify-center bg-black/55 p-2 backdrop-blur-[1px] sm:p-4 print:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chart-fs-title"
+              onClick={() => setExpandedChart(null)}
+            >
+          <div
+            className="flex max-h-[100dvh] w-full max-w-[min(1280px,100%)] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl dark:border-zinc-600"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-3">
+              <div className="min-w-0 pr-2">
+                <h2 id="chart-fs-title" className="text-base font-semibold text-foreground">
+                  {expandedChart === 'facturacion'
+                    ? facturacionVista === 'mes_vs_mes'
+                      ? 'Facturación · mes vs mes anterior'
+                      : 'Facturación · YTD año vs año anterior'
+                    : expandedChart === 'flujo'
+                      ? 'Flujo (MXN) · Sadama, Amadeus y total'
+                      : expandedChart === 'bancos'
+                        ? 'Bancos (MXN) · cuentas apiladas'
+                        : expandedChart === 'cxp'
+                          ? 'CXP por proveedor'
+                          : 'Inventario (MXN) · Sadama, Amadeus y total'}
+                </h2>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{periodHint}</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setExpandedChart(null)}>
+                Cerrar
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              {expandedChart === 'facturacion' ? (
+                <>
+                  <FacturacionYtdBrechaCallout brecha={facturacionBrechaYtd} className="mb-4" />
+                  <FacturacionObjetivo20Callout data={facturacionVsObjetivo20} className="mb-4" />
+                  <ChartStructureInfoButton
+                    panelTitle="Cálculo y estructura de la gráfica de facturación total"
+                    className="mb-4 max-w-full"
+                  >
+                    <p>
+                      Misma base que los héroes de facturación YTD: <span className="font-medium">Sadama + Amadeus</span> por mes; en cada mes se toma
+                      el último registro con fecha ≤ corte (campos <span className="font-medium">Fact. día / mes</span> = MTD del mes). El{' '}
+                      <span className="font-medium">mes del corte</span> se va actualizando con cada captura; los JSON{' '}
+                      <span className="font-medium">data/amadeus_monto_neto_mensual.json</span> y{' '}
+                      <span className="font-medium">data/sadama_monto_neto_mensual.json</span> solo sustituyen meses anteriores al de cierre (cierre
+                      oficial). Los gráficos <span className="font-medium">mes vs mes</span> y <span className="font-medium">YTD año vs año</span> usan
+                      este total combinado. En <span className="font-medium">YTD</span>, la línea punteada naranja es la meta <span className="font-medium">+20%</span>{' '}
+                      sobre el acumulado del año anterior en cada mes. El eje vertical llega hasta el máximo de las tres series más 2&nbsp;M&nbsp;MXN de
+                      margen. Corte operativo (México):{' '}
+                      <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {format(parseISO(asOfDay), "d 'de' MMMM yyyy", { locale: es })}
+                      </span>
+                      .
+                    </p>
+                  </ChartStructureInfoButton>
+                  {facturacionVista === 'mes_vs_mes' ? (
+                  mesVsBarData.length === 0 ? (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin datos de facturación en la serie.</p>
+                  ) : (
+                    <>
+                      {mesVsDeltaPct != null ? (
+                        <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-300">
+                          Variación mes actual vs anterior:{' '}
+                          <span className="font-semibold tabular-nums">{formatPct(mesVsDeltaPct)}</span>
+                        </p>
+                      ) : null}
+                      <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                        {mounted ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={mesVsBarData} margin={{ top: 16, right: 20, left: 12, bottom: 12 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                              <XAxis
+                                dataKey="periodo"
+                                tick={axisTickLg}
+                                interval={0}
+                                angle={-18}
+                                textAnchor="end"
+                                height={56}
+                              />
+                              <YAxis
+                                width={68}
+                                tick={axisTickLg}
+                                tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                              />
+                              <Tooltip
+                                cursor={{ fill: 'var(--chart-brush-area)' }}
+                                content={({ active, payload }) => {
+                                  if (!active || !payload?.[0]) return null;
+                                  const row = payload[0].payload as { periodo: string; total: number };
+                                  return (
+                                    <TooltipShell className="max-w-[min(92vw,420px)] px-3.5 py-2.5">
+                                      <div className="text-base font-semibold">{row.periodo}</div>
+                                      <div className="mt-1 text-base tabular-nums font-medium">{formatMXN(row.total)}</div>
+                                    </TooltipShell>
+                                  );
+                                }}
+                              />
+                              <Bar
+                                dataKey="total"
+                                name="Fact. total Sadama+Amadeus (MXN)"
+                                fill="var(--chart-line-flujo)"
+                                radius={[4, 4, 0, 0]}
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700">
+                        <table className="w-full border-collapse text-sm">
+                          <thead className="bg-zinc-100 dark:bg-zinc-900/80">
+                            <tr>
+                              <th className="border-b px-3 py-2 text-left font-semibold dark:border-zinc-700">Periodo</th>
+                              <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                                Total (MXN)
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mesVsBarData.map((r) => (
+                              <tr key={r.periodo} className="border-b border-zinc-100 dark:border-zinc-800">
+                                <td className="px-3 py-2">{r.periodo}</td>
+                                <td className="px-3 py-2 text-right tabular-nums font-medium">{formatMXN(r.total)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )
+                ) : ytdFactSeries.length === 0 ? (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin datos para YTD en el año en curso.</p>
+                ) : (
+                  <>
+                    <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                      {mounted ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={ytdFactSeriesChart} margin={{ top: 16, right: 20, left: 8, bottom: 8 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                            <XAxis dataKey="label" tick={axisTickLg} />
+                            <YAxis
+                              width={68}
+                              tick={axisTickLg}
+                              domain={ytdFactChartYAxisMax != null ? [0, ytdFactChartYAxisMax] : undefined}
+                              tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                            />
+                            <Tooltip
+                              content={({ active, payload }) => {
+                                if (!active || !payload?.length) return null;
+                                const row = payload[0]?.payload as
+                                  | {
+                                      label: string;
+                                      ytdAnioActual: number;
+                                      ytdAnioAnterior: number;
+                                      ytdObjetivo20: number;
+                                    }
+                                  | undefined;
+                                if (!row) return null;
+                                return (
+                                  <TooltipShell className="max-w-[min(92vw,440px)] px-3.5 py-2.5 text-sm">
+                                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                                      Mes {row.label}
+                                    </div>
+                                    <ul className="mt-2 space-y-2 text-sm">
+                                      <li className="flex justify-between gap-6 tabular-nums">
+                                        <span>YTD {ytdYears.actual}</span>
+                                        <span className="font-semibold">{formatMXN(row.ytdAnioActual)}</span>
+                                      </li>
+                                      <li className="flex justify-between gap-6 tabular-nums">
+                                        <span>YTD {ytdYears.anterior}</span>
+                                        <span className="font-semibold">{formatMXN(row.ytdAnioAnterior)}</span>
+                                      </li>
+                                      <li className="flex justify-between gap-6 tabular-nums">
+                                        <span>Meta +20%</span>
+                                        <span className="font-semibold">{formatMXN(row.ytdObjetivo20)}</span>
+                                      </li>
+                                    </ul>
+                                  </TooltipShell>
+                                );
+                              }}
+                            />
+                            <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
+                            <Line
+                              type="monotone"
+                              dataKey="ytdAnioActual"
+                              name={`Acumulado ${ytdYears.actual}`}
+                              stroke="var(--chart-line-flujo)"
+                              strokeWidth={3}
+                              dot={{ r: 4 }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="ytdAnioAnterior"
+                              name={`Acumulado ${ytdYears.anterior}`}
+                              stroke="var(--chart-line-flujo-amadeus)"
+                              strokeWidth={3}
+                              dot={{ r: 4 }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="ytdObjetivo20"
+                              name={`Meta +20% vs ${ytdYears.anterior}`}
+                              stroke="var(--chart-line-objetivo-fact)"
+                              strokeWidth={2.5}
+                              strokeDasharray="6 4"
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : null}
+                    </div>
+                    <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700">
+                      <table className="w-full border-collapse text-sm">
+                        <thead className="bg-zinc-100 dark:bg-zinc-900/80">
+                          <tr>
+                            <th className="border-b px-3 py-2 text-left font-semibold dark:border-zinc-700">Mes</th>
+                            <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                              YTD {ytdYears.actual}
+                            </th>
+                            <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                              YTD {ytdYears.anterior}
+                            </th>
+                            <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                              Meta +20%
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ytdFactSeriesChart.map((r) => (
+                            <tr key={r.label} className="border-b border-zinc-100 dark:border-zinc-800">
+                              <td className="px-3 py-2 font-medium">{r.label}</td>
+                              <td className="px-3 py-2 text-right tabular-nums">{formatMXN(r.ytdAnioActual)}</td>
+                              <td className="px-3 py-2 text-right tabular-nums">{formatMXN(r.ytdAnioAnterior)}</td>
+                              <td className="px-3 py-2 text-right tabular-nums">{formatMXN(r.ytdObjetivo20)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )
+                }
+              </>
+              ) : expandedChart === 'flujo' ? (
+                <>
+                  <ChartStructureInfoButton panelTitle="Estructura de la gráfica de flujo" className="mb-3 max-w-full">
+                    <p>
+                      Tres series: Sadama, Amadeus y total. Pasa el cursor sobre la gráfica para ver el desglose por línea; en esta vista el tooltip es
+                      más ancho.
+                    </p>
+                  </ChartStructureInfoButton>
+                  <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                    {mounted && flujoChart.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={flujoChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                          <XAxis
+                            dataKey="bucketEnd"
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : String(v))}
+                            minTickGap={28}
+                            interval="preserveStartEnd"
+                            angle={-32}
+                            textAnchor="end"
+                            height={68}
+                          />
+                          <YAxis
+                            width={68}
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                          />
+                          <Tooltip
+                            content={(props) => (
+                              <FlujoTooltip
+                                active={props.active}
+                                payload={props.payload as ChartTooltipProps['payload']}
+                                wide
+                              />
+                            )}
+                            cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} iconType="line" />
+                          <Line
+                            type="monotone"
+                            dataKey="flujo_sadama"
+                            name="Sadama"
+                            stroke="var(--chart-line-flujo-sadama)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="flujo_amadeus"
+                            name="Amadeus"
+                            stroke="var(--chart-line-flujo-amadeus)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="flujo_total"
+                            name="Total"
+                            stroke="var(--chart-line-flujo)"
+                            strokeWidth={3}
+                            dot={
+                              flujoChart.length <= 16
+                                ? {
+                                    r: 4,
+                                    fill: 'var(--chart-line-flujo)',
+                                    stroke: 'var(--color-background)',
+                                    strokeWidth: 1,
+                                  }
+                                : false
+                            }
+                            activeDot={{
+                              r: 6,
+                              fill: 'var(--chart-line-flujo)',
+                              stroke: 'var(--color-background)',
+                              strokeWidth: 2,
+                            }}
+                          />
+                          {showChartBrush ? (
+                            <Brush
+                              dataKey="bucketEnd"
+                              height={22}
+                              stroke="var(--chart-brush)"
+                              fill="var(--chart-brush-area)"
+                              tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : '')}
+                              travellerWidth={10}
+                            />
+                          ) : null}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                        Sin datos en este alcance
+                      </div>
+                    )}
+                  </div>
+                  <ChartDataTable
+                    rows={flujoChart}
+                    caption="Montos por fecha de corte (más reciente arriba)."
+                    tableMaxHeightClass="max-h-72"
+                    columns={[
+                      { key: 'bucketEnd', label: 'Fecha' },
+                      { key: 'flujo_sadama', label: 'Sadama', align: 'right' },
+                      { key: 'flujo_amadeus', label: 'Amadeus', align: 'right' },
+                      { key: 'flujo_total', label: 'Total', align: 'right' },
+                    ]}
+                  />
+                </>
+              ) : expandedChart === 'bancos' ? (
+                <>
+                  <ChartStructureInfoButton panelTitle="Estructura de la gráfica de bancos" className="mb-3 max-w-full">
+                    <p>
+                      Áreas apiladas por cuenta; el tooltip lista cada línea y el total del día o periodo. Montos en MXN al tipo de cambio del día de
+                      cada captura.
+                    </p>
+                  </ChartStructureInfoButton>
+                  <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                    {mounted && bancosChart.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={bancosChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                          <XAxis
+                            dataKey="bucketEnd"
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : String(v))}
+                            minTickGap={28}
+                            interval="preserveStartEnd"
+                            angle={-32}
+                            textAnchor="end"
+                            height={68}
+                          />
+                          <YAxis
+                            width={68}
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                          />
+                          <Tooltip
+                            content={(props) => (
+                              <BancosTooltip
+                                active={props.active}
+                                payload={props.payload as ChartTooltipProps['payload']}
+                                wide
+                              />
+                            )}
+                            cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 13 }} />
+                          <Area
+                            type="monotone"
+                            stackId="b"
+                            dataKey="bajio_mxn"
+                            name="Bajío MXN"
+                            fill="var(--chart-banco-a)"
+                            stroke="var(--chart-banco-a)"
+                            fillOpacity={0.55}
+                            strokeWidth={1}
+                          />
+                          <Area
+                            type="monotone"
+                            stackId="b"
+                            dataKey="hsbc"
+                            name="HSBC"
+                            fill="var(--chart-banco-b)"
+                            stroke="var(--chart-banco-b)"
+                            fillOpacity={0.55}
+                            strokeWidth={1}
+                          />
+                          <Area
+                            type="monotone"
+                            stackId="b"
+                            dataKey="bajio_usd_mxn"
+                            name="Bajío USD (MXN)"
+                            fill="var(--chart-banco-c)"
+                            stroke="var(--chart-banco-c)"
+                            fillOpacity={0.55}
+                            strokeWidth={1}
+                          />
+                          {showChartBrush ? (
+                            <Brush
+                              dataKey="bucketEnd"
+                              height={22}
+                              stroke="var(--chart-brush)"
+                              fill="var(--chart-brush-area)"
+                              tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : '')}
+                              travellerWidth={10}
+                            />
+                          ) : null}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                        Sin datos en este alcance
+                      </div>
+                    )}
+                  </div>
+                  <ChartDataTable
+                    rows={bancosChart}
+                    caption="Totales y cuentas por fecha (más reciente arriba)."
+                    tableMaxHeightClass="max-h-72"
+                    columns={[
+                      { key: 'bucketEnd', label: 'Fecha' },
+                      { key: 'total', label: 'Total', align: 'right' },
+                      { key: 'bajio_mxn', label: 'Bajío MXN', align: 'right' },
+                      { key: 'hsbc', label: 'HSBC', align: 'right' },
+                      { key: 'bajio_usd_mxn', label: 'Bajío USD→MXN', align: 'right' },
+                    ]}
+                  />
+                </>
+              ) : expandedChart === 'cxp' ? (
+                <>
+                  {lastBucket ? (
+                    <ChartStructureInfoButton panelTitle="Estructura de la gráfica de CXP" className="mb-3 max-w-full">
+                      <p>
+                        Total CXP al corte:{' '}
+                        <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{formatMXN(cxpVista.total)}</span>
+                        {lastBucket.bucketEnd ? (
+                          <>
+                            {' '}
+                            · fecha de corte <span className="font-medium tabular-nums">{lastBucket.bucketEnd}</span>
+                          </>
+                        ) : null}
+                        . La dona muestra la participación de cada proveedor en % sobre ese total.
+                      </p>
+                    </ChartStructureInfoButton>
+                  ) : null}
+                  <div className="chart-root w-full text-foreground" style={{ height: 'min(52vh, 480px)' }}>
+                    {mounted && cxpVista.pie.some((s) => s.value > 0) ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Tooltip
+                            content={(props) => (
+                              <CxpPieTooltip
+                                active={props.active}
+                                payload={props.payload as PieTooltipProps['payload']}
+                                wide
+                              />
+                            )}
+                          />
+                          <Legend
+                            wrapperStyle={{ fontSize: 13 }}
+                            formatter={(value, entry) => {
+                              const p = entry.payload as { pct?: number; name?: string } | undefined;
+                              if (p?.pct != null && Number.isFinite(p.pct)) return `${value} (${formatPct(p.pct)})`;
+                              return String(value);
+                            }}
+                          />
+                          <Pie
+                            data={cxpVista.pie}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={64}
+                            outerRadius={112}
+                            stroke="var(--chart-pie-stroke)"
+                            strokeWidth={2}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                        Sin datos en este alcance
+                      </div>
+                    )}
+                  </div>
+                  {lastBucket && cxpVista.rows.length > 0 ? (
+                    <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700">
+                      <table className="w-full border-collapse text-sm">
+                        <thead className="bg-zinc-100 dark:bg-zinc-900/80">
+                          <tr>
+                            <th className="border-b px-3 py-2 text-left font-semibold dark:border-zinc-700">
+                              Proveedor
+                            </th>
+                            <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                              Monto (MXN)
+                            </th>
+                            <th className="border-b px-3 py-2 text-right font-semibold dark:border-zinc-700">
+                              % del total
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cxpVista.rows.map((r) => (
+                            <tr
+                              key={r.name}
+                              className="border-b border-zinc-100 dark:border-zinc-800"
+                            >
+                              <td className="px-3 py-2">{r.name}</td>
+                              <td className="px-3 py-2 text-right tabular-nums font-medium">{formatMXN(r.value)}</td>
+                              <td className="px-3 py-2 text-right tabular-nums">{formatPct(r.pct)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <ChartStructureInfoButton panelTitle="Estructura de la gráfica de inventario" className="mb-3 max-w-full">
+                    <p>
+                      Tres series: Sadama, Amadeus y total. En esta vista ampliada el tooltip muestra con más espacio el importe de cada línea.
+                    </p>
+                  </ChartStructureInfoButton>
+                  <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                    {mounted && inventarioChart.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={inventarioChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                          <XAxis
+                            dataKey="bucketEnd"
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : String(v))}
+                            minTickGap={28}
+                            interval="preserveStartEnd"
+                            angle={-32}
+                            textAnchor="end"
+                            height={68}
+                          />
+                          <YAxis
+                            width={68}
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                          />
+                          <Tooltip
+                            content={(props) => (
+                              <InventarioTooltip
+                                active={props.active}
+                                payload={props.payload as ChartTooltipProps['payload']}
+                                wide
+                              />
+                            )}
+                            cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} iconType="line" />
+                          <Line
+                            type="monotone"
+                            dataKey="inventario_sadama"
+                            name="Sadama"
+                            stroke="var(--chart-line-flujo-sadama)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="inventario_amadeus"
+                            name="Amadeus"
+                            stroke="var(--chart-line-flujo-amadeus)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="inventario_total"
+                            name="Total"
+                            stroke="var(--chart-line-inventario)"
+                            strokeWidth={3}
+                            dot={
+                              inventarioChart.length <= 16
+                                ? {
+                                    r: 4,
+                                    fill: 'var(--chart-line-inventario)',
+                                    stroke: 'var(--color-background)',
+                                    strokeWidth: 1,
+                                  }
+                                : false
+                            }
+                            activeDot={{
+                              r: 6,
+                              fill: 'var(--chart-line-inventario)',
+                              stroke: 'var(--color-background)',
+                              strokeWidth: 2,
+                            }}
+                          />
+                          {showChartBrush ? (
+                            <Brush
+                              dataKey="bucketEnd"
+                              height={22}
+                              stroke="var(--chart-brush)"
+                              fill="var(--chart-brush-area)"
+                              tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : '')}
+                              travellerWidth={10}
+                            />
+                          ) : null}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                        Sin datos en este alcance
+                      </div>
+                    )}
+                  </div>
+                  <ChartDataTable
+                    rows={inventarioChart}
+                    caption="Inventario por fecha de corte (más reciente arriba)."
+                    tableMaxHeightClass="max-h-72"
+                    columns={[
+                      { key: 'bucketEnd', label: 'Fecha' },
+                      { key: 'inventario_sadama', label: 'Sadama', align: 'right' },
+                      { key: 'inventario_amadeus', label: 'Amadeus', align: 'right' },
+                      { key: 'inventario_total', label: 'Total', align: 'right' },
+                    ]}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+        </div>,
+            document.body,
+          )
+        : null}
 
       <AlertsBanner yoy={yoy} className="mt-4" />
 

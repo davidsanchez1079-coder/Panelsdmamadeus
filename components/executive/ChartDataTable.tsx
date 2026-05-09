@@ -11,19 +11,27 @@ export function ChartDataTable({
   columns,
   caption,
   className,
+  tableMaxHeightClass = 'max-h-40',
 }: {
   /** Filas de gráficas (p. ej. ChartRow); se indexan por `key` de columnas. */
   rows: object[];
   columns: ChartTableColumn[];
   caption?: string;
   className?: string;
+  /** Altura máxima del área con scroll (p. ej. `max-h-72` en vista ampliada). */
+  tableMaxHeightClass?: string;
 }) {
   if (rows.length === 0) return null;
 
   return (
     <div className={cn('mt-3', className)}>
       {caption ? <p className="mb-1.5 text-xs text-zinc-500 dark:text-zinc-400">{caption}</p> : null}
-      <div className="max-h-40 overflow-auto rounded-md border border-zinc-200 dark:border-zinc-800">
+      <div
+        className={cn(
+          'overflow-auto rounded-md border border-zinc-200 dark:border-zinc-800',
+          tableMaxHeightClass,
+        )}
+      >
         <table className="w-full border-collapse text-xs">
           <thead className="sticky top-0 z-10 bg-zinc-200/95 dark:bg-gradient-to-r dark:from-slate-800/95 dark:to-zinc-900/95 dark:text-zinc-100">
             <tr>

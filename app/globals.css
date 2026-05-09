@@ -19,6 +19,8 @@
   --chart-line-flujo-amadeus: #6d28d9;
   --chart-line-inventario: #be185d;
   --chart-line-soft: #0c4a6e;
+  /* Meta YTD facturación (+20% vs año ant.) — línea guía en gráficas */
+  --chart-line-objetivo-fact: #c2410c;
   --chart-grid: rgba(100, 116, 139, 0.22);
   --chart-brush: #0ea5e9;
   --chart-brush-area: rgba(14, 165, 233, 0.22);
@@ -76,6 +78,7 @@
   --chart-line-flujo-amadeus: #a78bfa;
   --chart-line-inventario: #c4b5fd;
   --chart-line-soft: #7dd3fc;
+  --chart-line-objetivo-fact: #fb923c;
   --chart-grid: rgba(56, 189, 248, 0.1);
   --chart-brush: #38bdf8;
   --chart-brush-area: rgba(56, 189, 248, 0.18);

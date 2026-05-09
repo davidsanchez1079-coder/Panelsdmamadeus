@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { formatChartDayNumeric } from '@/lib/dateDisplay';
 import { formatMXN } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { ChartStructureInfoButton } from './ChartStructureInfoButton';
 import { YoYBadge } from './YoYBadge';
 
 export type SparkTriplePoint = { x: string; sadama: number; amadeus: number; total: number };
@@ -56,7 +56,6 @@ export function ExecKPICard({
   value,
   deltaPct,
   sparkTriple,
-  href,
   showChart = true,
 }: {
   title: string;
@@ -64,7 +63,6 @@ export function ExecKPICard({
   value: number | null | undefined;
   deltaPct: number | null | undefined;
   sparkTriple: SparkTriplePoint[];
-  href: string;
   showChart?: boolean;
 }) {
   const first = sparkTriple[0];
@@ -90,12 +88,10 @@ export function ExecKPICard({
     ) : null;
 
   return (
-    <Link
-      href={href}
+    <div
       className={cn(
-        'dashboard-panel group rounded-xl border border-border bg-background p-4 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:ring-1 dark:hover:ring-sky-500/25',
+        'dashboard-panel group rounded-xl border border-border bg-background p-4 dark:shadow-none',
       )}
-      title={`Ir al dashboard completo: ${title}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -164,9 +160,12 @@ export function ExecKPICard({
       ) : null}
       {scaleHint}
 
-      <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Tres líneas: Sadama, Amadeus y total · Pasa el cursor para ver montos · Click para detalle
-      </div>
-    </Link>
+      <ChartStructureInfoButton panelTitle="Estructura de esta mini gráfica" className="mt-2 w-full">
+        <p>
+          Tres líneas: Sadama, Amadeus y total. Pasa el cursor para ver montos. Para ver la serie completa con más detalle usa el icono de ampliar en las
+          gráficas principales más abajo.
+        </p>
+      </ChartStructureInfoButton>
+    </div>
   );
 }

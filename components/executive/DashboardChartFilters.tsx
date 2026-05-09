@@ -7,6 +7,7 @@ import type {
 } from '@/lib/chartSeriesFilters';
 import { CHART_GRANULARITY_OPTIONS, CHART_RANGE_OPTIONS } from '@/lib/chartSeriesFilters';
 import { cn } from '@/lib/utils';
+import { ChartStructureInfoButton } from '@/components/executive/ChartStructureInfoButton';
 
 export function DashboardChartFilters({
   rangePreset,
@@ -76,9 +77,6 @@ export function DashboardChartFilters({
               className={dateInputClass}
             />
           </label>
-          <p className="pb-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400 sm:max-w-[200px]">
-            El “hasta” no puede superar el último corte del dashboard ({asOfDay}).
-          </p>
         </div>
       ) : null}
 
@@ -96,10 +94,21 @@ export function DashboardChartFilters({
           ))}
         </select>
       </label>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 sm:max-w-md sm:flex-1">
-        Las gráficas usan montos (MXN) en el eje vertical y fechas o periodos en el horizontal. Con muchos puntos,
-        elige agrupación por semana o mes. El rango personalizado filtra por fecha de corte incluida en el intervalo.
-      </p>
+      <ChartStructureInfoButton
+        panelTitle="Filtros de alcance y estructura de las gráficas"
+        className="w-full sm:ml-auto sm:w-auto sm:shrink-0"
+      >
+        {rangePreset === 'custom_range' ? (
+          <p className="mb-2">
+            En rango personalizado, la fecha <span className="font-medium">hasta</span> no puede superar el último corte del dashboard (
+            <span className="tabular-nums">{asOfDay}</span>).
+          </p>
+        ) : null}
+        <p>
+          Las gráficas de flujo, bancos e inventario usan montos (MXN) en el eje vertical y fechas o periodos en el horizontal. Con muchos puntos,
+          conviene agrupar por semana o mes. El rango personalizado filtra por fecha de corte incluida en el intervalo.
+        </p>
+      </ChartStructureInfoButton>
     </div>
   );
 }

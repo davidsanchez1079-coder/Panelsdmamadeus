@@ -21,6 +21,7 @@ function mesHastaCorte(yyyymm: string, asOfDay: string): boolean {
 
 /**
  * Sustituye (o inserta) totales mensuales de facturación con montos netos oficiales por mes (misma lógica Sadama/Amadeus).
+ * El mes calendario de `asOfDay` **no** se sustituye: ahí debe reflejarse el MTD acumulado de la captura diaria hasta el corte.
  */
 export function applyOfficialMontoNetoMensual(
   monthly: FacturacionMesRow[],
@@ -28,12 +29,14 @@ export function applyOfficialMontoNetoMensual(
   asOfDay: string,
 ): FacturacionMesRow[] {
   if (!byMonth || Object.keys(byMonth).length === 0) return monthly;
+  const mesOperativo = asOfDay.slice(0, 7);
   const map = new Map<string, FacturacionMesRow>();
   for (const r of monthly) {
     map.set(r.yyyymm, { ...r });
   }
   for (const [yyyymm, val] of Object.entries(byMonth)) {
     if (!mesHastaCorte(yyyymm, asOfDay)) continue;
+    if (yyyymm === mesOperativo) continue;
     if (typeof val !== 'number' || !Number.isFinite(val)) continue;
     const prev = map.get(yyyymm);
     if (prev) {
