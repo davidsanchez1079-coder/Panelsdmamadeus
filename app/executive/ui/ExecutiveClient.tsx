@@ -822,8 +822,9 @@ export function ExecutiveClient({
 
   const cxpVista = useMemo(() => {
     const { total, rows } = cxpProveedoresConPct(lastBucket);
-    const pie = rows.map((r, i) => ({ ...r, fill: PIE_FILLS[i % PIE_FILLS.length] }));
-    return { total, rows, pie };
+    const rowsSorted = [...rows].sort((a, b) => b.value - a.value);
+    const pie = rowsSorted.map((r, i) => ({ ...r, fill: PIE_FILLS[i % PIE_FILLS.length] }));
+    return { total, rows: rowsSorted, pie };
   }, [lastBucket]);
 
   const periodHint = `${rangePresetShortLabel(rangePreset, rangePreset === 'custom_range' ? customRange : null)} · corte máx. ${asOfDay}`;
