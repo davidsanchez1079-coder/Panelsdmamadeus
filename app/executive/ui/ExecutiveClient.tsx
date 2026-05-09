@@ -2258,6 +2258,12 @@ export function ExecutiveClient({
                           ? 'se ha incrementado'
                           : 'ha disminuido';
                     const scope = scopeNarrative(rangePreset, customRange, asOfDay);
+                    const riskNote =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? null
+                        : s.deltaPct > 0
+                          ? 'Mientras más cuentas por cobrar, más capital se queda detenido: es un comportamiento riesgoso para la empresa.'
+                          : 'La disminución de cuentas por cobrar reduce riesgo y libera capital hacia el flujo.';
                     return (
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
                         <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
@@ -2277,6 +2283,12 @@ export function ExecutiveClient({
                               <span className={cn('font-semibold tabular-nums', toneNumberClass('cxc_total', s.deltaPct))}>
                                 {formatPct(s.deltaPct)}
                               </span>
+                            </>
+                          ) : null}
+                          {riskNote ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-medium', toneNumberClass('cxc_total', s.deltaPct))}>{riskNote}</span>
                             </>
                           ) : null}
                         </div>
