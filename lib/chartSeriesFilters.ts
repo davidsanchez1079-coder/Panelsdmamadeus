@@ -141,8 +141,9 @@ export function resolveChartGranularity(
     return g;
   }
   if (g === 'auto') {
-    if (pointCount > 60) return 'month';
-    if (pointCount > 18) return 'week';
+    // En el ejecutivo hay capturas por día (o días hábiles) y perder fechas intermedias
+    // (p. ej. 7-may) confunde. En auto mantenemos día; el usuario puede forzar semana/mes.
+    if (pointCount > 120) return 'month';
     return 'day';
   }
   return g;

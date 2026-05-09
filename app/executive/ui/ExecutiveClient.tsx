@@ -588,7 +588,7 @@ export function ExecutiveClient({
   const [mode, setMode] = useState<ExecutiveMode>('ytd');
   const [mounted, setMounted] = useState(false);
   const [rangePreset, setRangePreset] = useState<ChartRangePreset>('year_natural');
-  const [granularity, setGranularity] = useState<ChartGranularity>('auto');
+  const [granularity, setGranularity] = useState<ChartGranularity>('day');
   const [customRange, setCustomRange] = useState<ChartCustomDateRange>({ start: '', end: '' });
   const [facturacionVista, setFacturacionVista] = useState<'mes_vs_mes' | 'ytd_anios'>('ytd_anios');
   const [expandedChart, setExpandedChart] = useState<ExecutiveExpandedChart | null>(null);
