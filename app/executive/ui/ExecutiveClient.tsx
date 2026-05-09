@@ -71,11 +71,11 @@ const KPI_ORDER = [
 
 type KpiSparkKey = (typeof KPI_ORDER)[number]['key'];
 
-const KPI_EXPAND_TARGET: Record<KpiSparkKey, 'bancos' | 'inventario' | 'cxp' | 'cxc'> = {
+const KPI_EXPAND_TARGET: Record<KpiSparkKey, 'bancos' | 'inventario' | 'cxp_total' | 'cxc'> = {
   bancos_total: 'bancos',
   inventario_total: 'inventario',
   cxc_total: 'cxc',
-  cxp_total: 'cxp',
+  cxp_total: 'cxp_total',
 };
 
 const KPI_SPARK_MAP: Record<KpiSparkKey, { s: keyof ChartRow; a: keyof ChartRow; t: keyof ChartRow }> = {
@@ -289,6 +289,28 @@ function CxcTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: bool
   );
 }
 
+function CxpTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: boolean }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload as { bucketEnd?: string } | undefined;
+  if (!row?.bucketEnd) return null;
+  const items = payload.filter((p) => p.name != null && typeof p.value === 'number');
+  return (
+    <TooltipShell className={wide ? 'max-w-[min(92vw,440px)] px-3.5 py-2.5 text-sm' : undefined}>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Fecha de corte</div>
+      <div className="text-sm font-semibold leading-tight">{formatCierreLabel(row.bucketEnd)}</div>
+      <div className="mt-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">CXP (MXN)</div>
+      <ul className={cn('mt-1 space-y-1', wide ? 'space-y-1.5 text-sm' : 'text-xs')}>
+        {items.map((p) => (
+          <li key={String(p.dataKey)} className="flex justify-between gap-4 tabular-nums">
+            <span className="text-zinc-600 dark:text-zinc-300">{p.name}</span>
+            <span className="font-medium">{formatMXN(p.value as number)}</span>
+          </li>
+        ))}
+      </ul>
+    </TooltipShell>
+  );
+}
+
 type PieTooltipProps = {
   active?: boolean;
   payload?: ReadonlyArray<{
@@ -355,7 +377,7 @@ function BancosTooltip({ active, payload, wide }: ChartTooltipProps & { wide?: b
   );
 }
 
-type ExecutiveExpandedChart = 'facturacion' | 'flujo' | 'bancos' | 'cxp' | 'cxc' | 'inventario';
+type ExecutiveExpandedChart = 'facturacion' | 'flujo' | 'bancos' | 'cxp_total' | 'cxp' | 'cxc' | 'inventario';
 
 function resumenFactYtdWithFallback(monthly: FacturacionMesRow[], asOfDay: string) {
   const r = ytdFacturacionResumen(monthly, asOfDay);
@@ -1647,8 +1669,10 @@ export function ExecutiveClient({
                       ? 'Flujo (MXN) · Sadama, Amadeus y total'
                       : expandedChart === 'bancos'
                         ? 'Bancos (MXN) · cuentas apiladas'
-                        : expandedChart === 'cxp'
-                          ? 'CXP por proveedor'
+                          : expandedChart === 'cxp_total'
+                            ? 'CXP (MXN) · Sadama, Amadeus y total'
+                            : expandedChart === 'cxp'
+                              ? 'CXP por proveedor'
                           : expandedChart === 'cxc'
                             ? 'CXC (MXN) · Sadama, Amadeus y total'
                             : 'Inventario (MXN) · Sadama, Amadeus y total'}
@@ -2150,6 +2174,138 @@ export function ExecutiveClient({
                       { key: 'bajio_mxn', label: 'Bajío MXN', align: 'right' },
                       { key: 'hsbc', label: 'HSBC', align: 'right' },
                       { key: 'bajio_usd_mxn', label: 'Bajío USD→MXN', align: 'right' },
+                    ]}
+                  />
+                </>
+              ) : expandedChart === 'cxp_total' ? (
+                <>
+                  <ChartStructureInfoButton panelTitle="Estructura de la gráfica de CXP" className="mb-3 max-w-full">
+                    <p>
+                      Tres series: Sadama, Amadeus y total (cuentas por pagar). En esta vista ampliada el tooltip muestra con más espacio el importe de
+                      cada línea.
+                    </p>
+                  </ChartStructureInfoButton>
+                  {(() => {
+                    const s = summarizeSeriesDeltaMXN(inventarioChart as unknown as Array<{ bucketEnd: string } & Record<string, unknown>>, 'cxp_total');
+                    if (!s) return null;
+                    const verb =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? 'se ha mantenido'
+                        : s.deltaPct > 0
+                          ? 'se ha incrementado'
+                          : 'ha disminuido';
+                    const scope = scopeNarrative(rangePreset, customRange, asOfDay);
+                    return (
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+                        <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                          <span className="font-medium">CXP</span> {verb} en {scope.label}
+                          {scope.showDates ? (
+                            <>
+                              {' '}
+                              de <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                              <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                            </>
+                          ) : (
+                            '.'
+                          )}
+                          {s.deltaPct != null && Number.isFinite(s.deltaPct) ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-semibold tabular-nums', toneNumberClass('cxp_total', s.deltaPct))}>
+                                {formatPct(s.deltaPct)}
+                              </span>
+                            </>
+                          ) : null}
+                        </div>
+                        <YoYBadge kpiKey="cxp_total" deltaPct={s.deltaPct} />
+                      </div>
+                    );
+                  })()}
+                  <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
+                    {mounted && inventarioChart.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={inventarioChart} margin={{ top: 12, right: 16, left: 8, bottom: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                          <XAxis
+                            dataKey="bucketEnd"
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : String(v))}
+                            minTickGap={28}
+                            interval="preserveStartEnd"
+                            angle={-32}
+                            textAnchor="end"
+                            height={68}
+                          />
+                          <YAxis
+                            width={68}
+                            tick={axisTickLg}
+                            tickFormatter={(v) => (typeof v === 'number' ? formatMXNAxis(v) : String(v))}
+                          />
+                          <Tooltip
+                            content={(props) => (
+                              <CxpTooltip
+                                active={props.active}
+                                payload={props.payload as ChartTooltipProps['payload']}
+                                wide
+                              />
+                            )}
+                            cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }}
+                          />
+                          <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} iconType="line" />
+                          <Line
+                            type="monotone"
+                            dataKey="cxp_sadama"
+                            name="Sadama"
+                            stroke="var(--chart-line-flujo-sadama)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cxp_amadeus"
+                            name="Amadeus"
+                            stroke="var(--chart-line-flujo-amadeus)"
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5, strokeWidth: 1, stroke: 'var(--color-background)' }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="cxp_total"
+                            name="Total"
+                            stroke="var(--chart-spark-cxp-stroke)"
+                            strokeWidth={3}
+                            dot={inventarioChart.length <= 16 ? { r: 4, fill: 'var(--chart-spark-cxp-stroke)', stroke: 'var(--color-background)', strokeWidth: 1 } : false}
+                            activeDot={{ r: 6, fill: 'var(--chart-spark-cxp-stroke)', stroke: 'var(--color-background)', strokeWidth: 2 }}
+                          />
+                          {showChartBrush ? (
+                            <Brush
+                              dataKey="bucketEnd"
+                              height={22}
+                              stroke="var(--chart-brush)"
+                              fill="var(--chart-brush-area)"
+                              tickFormatter={(v) => (typeof v === 'string' ? formatChartDayNumeric(v) : '')}
+                              travellerWidth={10}
+                            />
+                          ) : null}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                        Sin datos en este alcance
+                      </div>
+                    )}
+                  </div>
+                  <ChartDataTable
+                    rows={inventarioChart}
+                    caption="CXP por fecha de corte (más reciente arriba)."
+                    tableMaxHeightClass="max-h-72"
+                    columns={[
+                      { key: 'bucketEnd', label: 'Fecha' },
+                      { key: 'cxp_sadama', label: 'Sadama', align: 'right' },
+                      { key: 'cxp_amadeus', label: 'Amadeus', align: 'right' },
+                      { key: 'cxp_total', label: 'Total', align: 'right' },
                     ]}
                   />
                 </>
