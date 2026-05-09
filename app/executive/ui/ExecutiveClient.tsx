@@ -46,7 +46,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import type { ExecutiveViewModel, YoYDelta } from '@/lib/executive';
+import { getDeltaDirection, getPolarity, type ExecutiveViewModel, type YoYDelta } from '@/lib/executive';
 import type { JsonMeta } from '@/lib/types';
 import { formatMXN, formatMXNAxis, formatPct } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -158,6 +158,14 @@ function scopeNarrative(
     default:
       return { label: rangePresetShortLabel(preset, preset === 'custom_range' ? customRange : null), showDates: false };
   }
+}
+
+function toneNumberClass(kpiKey: string, deltaPct: number | null): string {
+  const polarity = getPolarity(kpiKey);
+  const dir = getDeltaDirection(polarity, deltaPct);
+  if (dir === 'good') return 'text-emerald-700 dark:text-emerald-300';
+  if (dir === 'bad') return 'text-red-700 dark:text-red-300';
+  return 'text-zinc-700 dark:text-zinc-300';
 }
 
 function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
@@ -1874,6 +1882,14 @@ export function ExecutiveClient({
                           ) : (
                             '.'
                           )}
+                          {s.deltaPct != null && Number.isFinite(s.deltaPct) ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-semibold tabular-nums', toneNumberClass('flujo_total', s.deltaPct))}>
+                                {formatPct(s.deltaPct)}
+                              </span>
+                            </>
+                          ) : null}
                         </div>
                         <YoYBadge kpiKey="flujo_total" deltaPct={s.deltaPct} />
                       </div>
@@ -2012,6 +2028,14 @@ export function ExecutiveClient({
                           ) : (
                             '.'
                           )}
+                          {s.deltaPct != null && Number.isFinite(s.deltaPct) ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-semibold tabular-nums', toneNumberClass('bancos_total', s.deltaPct))}>
+                                {formatPct(s.deltaPct)}
+                              </span>
+                            </>
+                          ) : null}
                         </div>
                         <YoYBadge kpiKey="bancos_total" deltaPct={s.deltaPct} />
                       </div>
@@ -2227,6 +2251,14 @@ export function ExecutiveClient({
                           ) : (
                             '.'
                           )}
+                          {s.deltaPct != null && Number.isFinite(s.deltaPct) ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-semibold tabular-nums', toneNumberClass('cxc_total', s.deltaPct))}>
+                                {formatPct(s.deltaPct)}
+                              </span>
+                            </>
+                          ) : null}
                         </div>
                         <YoYBadge kpiKey="cxc_total" deltaPct={s.deltaPct} />
                       </div>
@@ -2364,6 +2396,14 @@ export function ExecutiveClient({
                           ) : (
                             '.'
                           )}
+                          {s.deltaPct != null && Number.isFinite(s.deltaPct) ? (
+                            <>
+                              {' '}
+                              <span className={cn('font-semibold tabular-nums', toneNumberClass('inventario_total', s.deltaPct))}>
+                                {formatPct(s.deltaPct)}
+                              </span>
+                            </>
+                          ) : null}
                         </div>
                         <YoYBadge kpiKey="inventario_total" deltaPct={s.deltaPct} />
                       </div>
