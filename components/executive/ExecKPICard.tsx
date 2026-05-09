@@ -50,6 +50,72 @@ function SparkTooltip({ active, payload }: SparkTipProps) {
   );
 }
 
+const Y_AXIS_AUTO: [string, string] = ['auto', 'auto'];
+
+function ExecKPISparklines({
+  showChart,
+  sparkTriple,
+  sparkStyle,
+}: {
+  showChart: boolean;
+  sparkTriple: SparkTriplePoint[];
+  sparkStyle: { totalStroke: string };
+}) {
+  if (!showChart) {
+    return <div className="h-full w-full rounded-md bg-zinc-100 dark:bg-zinc-900" />;
+  }
+  if (sparkTriple.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-md bg-zinc-100 text-[10px] text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
+        Sin puntos en el filtro
+      </div>
+    );
+  }
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={sparkTriple} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
+        <XAxis dataKey="x" type="category" hide />
+        <YAxis hide domain={Y_AXIS_AUTO} />
+        <Tooltip content={<SparkTooltip />} cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }} />
+        <Legend
+          verticalAlign="bottom"
+          height={22}
+          iconType="line"
+          wrapperStyle={{ fontSize: 9, paddingTop: 2 }}
+          formatter={(value) => <span className="text-zinc-600 dark:text-zinc-400">{value}</span>}
+        />
+        <Line
+          type="monotone"
+          dataKey="sadama"
+          name="Sadama"
+          stroke={STROKE_SADAMA}
+          strokeWidth={1.75}
+          dot={false}
+          isAnimationActive={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="amadeus"
+          name="Amadeus"
+          stroke={STROKE_AMADEUS}
+          strokeWidth={1.75}
+          dot={false}
+          isAnimationActive={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="total"
+          name="Total"
+          stroke={sparkStyle.totalStroke}
+          strokeWidth={2.25}
+          dot={false}
+          isAnimationActive={false}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function ExecKPICard({
   title,
   kpiKey,
@@ -102,55 +168,7 @@ export function ExecKPICard({
       </div>
 
       <div className="chart-root mt-2 h-[88px] w-full min-w-0 text-foreground">
-        {showChart && sparkTriple.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={sparkTriple} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
-              <XAxis dataKey="x" type="category" hide />
-              <YAxis hide domain={['auto', 'auto']} />
-              <Tooltip content={<SparkTooltip />} cursor={{ stroke: 'var(--chart-cursor)', strokeWidth: 1 }} />
-              <Legend
-                verticalAlign="bottom"
-                height={22}
-                iconType="line"
-                wrapperStyle={{ fontSize: 9, paddingTop: 2 }}
-                formatter={(value) => <span className="text-zinc-600 dark:text-zinc-400">{value}</span>}
-              />
-              <Line
-                type="monotone"
-                dataKey="sadama"
-                name="Sadama"
-                stroke={STROKE_SADAMA}
-                strokeWidth={1.75}
-                dot={false}
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="amadeus"
-                name="Amadeus"
-                stroke={STROKE_AMADEUS}
-                strokeWidth={1.75}
-                dot={false}
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="total"
-                name="Total"
-                stroke={sparkStyle.totalStroke}
-                strokeWidth={2.25}
-                dot={false}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : showChart ? (
-          <div className="flex h-full items-center justify-center rounded-md bg-zinc-100 text-[10px] text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-            Sin puntos en el filtro
-          </div>
-        ) : (
-          <div className="h-full w-full rounded-md bg-zinc-100 dark:bg-zinc-900" />
-        )}
+        <ExecKPISparklines showChart={showChart} sparkTriple={sparkTriple} sparkStyle={sparkStyle} />
       </div>
 
       {rangeLabel ? (
