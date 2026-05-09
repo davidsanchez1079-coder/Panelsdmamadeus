@@ -34,7 +34,7 @@ export function YoYBadge({
         styles,
         className,
       )}
-      title={titleProp ?? 'Variación vs punto anterior en el periodo seleccionado'}
+      title={titleProp ?? 'Variación vs inicio del periodo seleccionado'}
     >
       <span aria-hidden="true">{arrow}</span>
       <span>{formatPct(deltaPct)}</span>

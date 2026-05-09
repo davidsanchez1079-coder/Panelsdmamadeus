@@ -91,14 +91,14 @@ function pickYoY(yoy: Record<string, YoYDelta> | null | undefined, kpiKey: strin
 
 function deltaPctFromChartRows(rows: ChartRow[], k: keyof ChartRow): number | null {
   if (rows.length < 2) return null;
+  const first = rows[0];
   const last = rows[rows.length - 1];
-  const prev = rows[rows.length - 2];
   const lastV = last ? (last[k] as unknown) : null;
-  const prevV = prev ? (prev[k] as unknown) : null;
-  if (typeof lastV !== 'number' || typeof prevV !== 'number') return null;
-  if (!Number.isFinite(lastV) || !Number.isFinite(prevV)) return null;
-  if (prevV === 0) return null;
-  return ((lastV - prevV) / Math.abs(prevV)) * 100;
+  const firstV = first ? (first[k] as unknown) : null;
+  if (typeof lastV !== 'number' || typeof firstV !== 'number') return null;
+  if (!Number.isFinite(lastV) || !Number.isFinite(firstV)) return null;
+  if (firstV === 0) return null;
+  return ((lastV - firstV) / Math.abs(firstV)) * 100;
 }
 
 function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
