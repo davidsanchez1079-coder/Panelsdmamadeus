@@ -17,6 +17,7 @@ export type ChartRangePreset =
   | 'last_7_points'
   | 'calendar_7d'
   | 'month_natural'
+  | 'last_3_months'
   | 'year_natural'
   | 'last_12_months'
   | 'custom_range';
@@ -39,6 +40,7 @@ export const CHART_RANGE_OPTIONS: { value: ChartRangePreset; label: string }[] =
   { value: 'last_7_points', label: 'Últimos 7 registros' },
   { value: 'calendar_7d', label: 'Últimos 7 días (calendario)' },
   { value: 'month_natural', label: 'Mes en curso (natural)' },
+  { value: 'last_3_months', label: 'Últimos 3 meses' },
   { value: 'year_natural', label: 'Año en curso (natural)' },
   { value: 'last_12_months', label: 'Últimos 12 meses' },
   { value: 'custom_range', label: 'Rango de fechas (personalizado)' },
@@ -92,6 +94,11 @@ export function sliceSeriesByPreset(
     case 'month_natural': {
       const prefix = asOfDay.slice(0, 7);
       return eligible.filter((p) => p.fecha.startsWith(prefix));
+    }
+    case 'last_3_months': {
+      const end = parseISO(asOfDay);
+      const start = format(startOfMonth(subMonths(end, 2)), 'yyyy-MM-dd');
+      return eligible.filter((p) => p.fecha >= start);
     }
     case 'year_natural': {
       const y = asOfDay.slice(0, 4);

@@ -5,10 +5,24 @@ import { Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } f
 import { formatChartDayNumeric } from '@/lib/dateDisplay';
 import { formatMXN } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { ChartExpandIconButton } from './ChartExpandIconButton';
 import { ChartStructureInfoButton } from './ChartStructureInfoButton';
 import { YoYBadge } from './YoYBadge';
 
 export type SparkTriplePoint = { x: string; sadama: number; amadeus: number; total: number };
+
+/** Primer punto del mes de `asOfDay` en la serie + los dos últimos puntos; sin duplicar fechas; más reciente arriba. */
+export function kpiSparkTableRows(sparkTriple: SparkTriplePoint[], asOfDay: string): SparkTriplePoint[] {
+  if (sparkTriple.length === 0) return [];
+  const yyyymm = asOfDay.slice(0, 7);
+  const firstOfMonth = sparkTriple.find((p) => p.x.slice(0, 7) === yyyymm);
+  const lastTwo = sparkTriple.slice(-2);
+  const byDate = new Map<string, SparkTriplePoint>();
+  for (const p of [firstOfMonth, ...lastTwo]) {
+    if (p) byDate.set(p.x, p);
+  }
+  return [...byDate.values()].sort((a, b) => b.x.localeCompare(a.x));
+}
 
 const SPARK_THEME: Record<string, { totalStroke: string }> = {
   bancos_total: { totalStroke: 'var(--chart-spark-bancos-stroke)' },
@@ -123,13 +137,23 @@ export function ExecKPICard({
   deltaPct,
   sparkTriple,
   showChart = true,
+  onExpand,
+  expandLabel,
+  asOfDay,
+  sparkTripleTable,
 }: {
   title: string;
   kpiKey: string;
   value: number | null | undefined;
   deltaPct: number | null | undefined;
   sparkTriple: SparkTriplePoint[];
+  /** Serie diaria (mismo alcance); la tabla usa esto para no omitir fechas cuando la gráfica está agrupada por semana/mes. */
+  sparkTripleTable: SparkTriplePoint[];
   showChart?: boolean;
+  onExpand?: () => void;
+  expandLabel?: string;
+  /** Corte operativo (yyyy-mm-dd): define el “mes en curso” para la tabla. */
+  asOfDay: string;
 }) {
   const first = sparkTriple[0];
   const last = sparkTriple[sparkTriple.length - 1];
@@ -153,6 +177,39 @@ export function ExecKPICard({
       </div>
     ) : null;
 
+  const tableRows = kpiSparkTableRows(sparkTripleTable, asOfDay);
+  const sparkMiniTable =
+    tableRows.length > 0 ? (
+      <div className="mt-1.5 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
+        <table className="w-full border-collapse text-[10px] tabular-nums">
+          <caption className="sr-only">
+            Primer registro del mes en curso y los dos últimos registros de la gráfica
+          </caption>
+          <thead>
+            <tr className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/80">
+              <th className="px-1.5 py-1 text-left font-medium text-zinc-600 dark:text-zinc-400">Fecha</th>
+              <th className="px-1.5 py-1 text-right font-medium text-zinc-600 dark:text-zinc-400">Sadama</th>
+              <th className="px-1.5 py-1 text-right font-medium text-zinc-600 dark:text-zinc-400">Amadeus</th>
+              <th className="px-1.5 py-1 text-right font-medium text-zinc-600 dark:text-zinc-400">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row) => (
+              <tr
+                key={row.x}
+                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800 dark:bg-zinc-950/40"
+              >
+                <td className="px-1.5 py-1 text-left text-zinc-800 dark:text-zinc-200">{formatChartDayNumeric(row.x)}</td>
+                <td className="px-1.5 py-1 text-right text-zinc-700 dark:text-zinc-300">{formatMXN(row.sadama)}</td>
+                <td className="px-1.5 py-1 text-right text-zinc-700 dark:text-zinc-300">{formatMXN(row.amadeus)}</td>
+                <td className="px-1.5 py-1 text-right font-medium text-zinc-900 dark:text-zinc-100">{formatMXN(row.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : null;
+
   return (
     <div
       className={cn(
@@ -164,7 +221,10 @@ export function ExecKPICard({
           <div className="truncate text-xs font-medium text-zinc-600 dark:text-zinc-300">{title}</div>
           <div className="mt-1 text-xl font-semibold tabular-nums">{value == null ? '—' : formatMXN(value)}</div>
         </div>
-        <YoYBadge kpiKey={kpiKey} deltaPct={deltaPct} className="shrink-0" />
+        <div className="flex shrink-0 items-start gap-1.5">
+          {onExpand && expandLabel ? <ChartExpandIconButton onClick={onExpand} label={expandLabel} /> : null}
+          <YoYBadge kpiKey={kpiKey} deltaPct={deltaPct} className="shrink-0" />
+        </div>
       </div>
 
       <div className="chart-root mt-2 h-[88px] w-full min-w-0 text-foreground">
@@ -177,11 +237,13 @@ export function ExecKPICard({
         </div>
       ) : null}
       {scaleHint}
+      {sparkMiniTable}
 
       <ChartStructureInfoButton panelTitle="Estructura de esta mini gráfica" className="mt-2 w-full">
         <p>
-          Tres líneas: Sadama, Amadeus y total. Pasa el cursor para ver montos. Para ver la serie completa con más detalle usa el icono de ampliar en las
-          gráficas principales más abajo.
+          Tres líneas: Sadama, Amadeus y total. Pasa el cursor para ver montos. La tabla usa los{' '}
+          <span className="font-medium">días con captura</span> del alcance (no la agrupación semanal/mensual de la gráfica), y muestra el primer corte del
+          mes en curso más los dos registros más recientes, sin repetir fecha. El icono de ampliar abre la vista grande con tabla completa.
         </p>
       </ChartStructureInfoButton>
     </div>
