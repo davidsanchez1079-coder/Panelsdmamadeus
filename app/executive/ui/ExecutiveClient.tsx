@@ -474,11 +474,15 @@ function FacturacionYtdBrechaCallout({
         )}
       >
         Para igualar el YTD {brecha.yearAnterior} de facturación total (Sadama + Amadeus) en el mismo lapso,{' '}
-        <span className="font-semibold tabular-nums">faltan {formatMXN(brecha.faltaMxn)}</span>
+        <span className="font-semibold tabular-nums text-red-700 dark:text-red-200">faltan {formatMXN(brecha.faltaMxn)}</span>
         {brecha.pctDelYtdAnterior != null ? (
           <>
             {' '}
-            (<span className="tabular-nums font-medium">{formatPctShare(brecha.pctDelYtdAnterior)}</span> del YTD{' '}
+            (
+            <span className="tabular-nums font-medium text-red-700 dark:text-red-200">
+              {formatPctShare(brecha.pctDelYtdAnterior)}
+            </span>{' '}
+            del YTD{' '}
             {brecha.yearAnterior})
           </>
         ) : null}
@@ -495,11 +499,17 @@ function FacturacionYtdBrechaCallout({
       )}
     >
       Respecto al YTD {brecha.yearAnterior} (mismo lapso), la facturación total {brecha.yearActual} va{' '}
-      <span className="font-semibold tabular-nums">{formatMXN(brecha.sobreMxn)} por encima</span>
+      <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-200">
+        {formatMXN(brecha.sobreMxn)} por encima
+      </span>
       {brecha.pctDelYtdAnterior != null ? (
         <>
           {' '}
-          (<span className="tabular-nums font-medium">{formatPct(brecha.pctDelYtdAnterior)}</span> sobre el YTD{' '}
+          (
+          <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-200">
+            {formatPct(brecha.pctDelYtdAnterior)}
+          </span>{' '}
+          sobre el YTD{' '}
           {brecha.yearAnterior})
         </>
       ) : null}
@@ -610,11 +620,16 @@ function FacturacionObjetivo20Callout({
       {data.kind === 'below' ? (
         <>
           {' '}
-          Van <span className="font-semibold tabular-nums">{formatMXN(data.faltaMxn)}</span> por debajo de esa meta
+          Van{' '}
+          <span className="font-semibold tabular-nums text-red-700 dark:text-red-200">{formatMXN(data.faltaMxn)}</span> por debajo de esa meta
           {data.pctDelObjetivo != null ? (
             <>
               {' '}
-              (<span className="tabular-nums font-medium">{formatPctShare(data.pctDelObjetivo)}</span> del monto objetivo)
+              (
+              <span className="tabular-nums font-medium text-red-700 dark:text-red-200">
+                {formatPctShare(data.pctDelObjetivo)}
+              </span>{' '}
+              del monto objetivo)
             </>
           ) : null}
           .
@@ -622,11 +637,16 @@ function FacturacionObjetivo20Callout({
       ) : data.kind === 'above' ? (
         <>
           {' '}
-          Superan la meta por <span className="font-semibold tabular-nums">{formatMXN(data.sobreMxn)}</span>
+          Superan la meta por{' '}
+          <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-200">{formatMXN(data.sobreMxn)}</span>
           {data.pctDelObjetivo != null ? (
             <>
               {' '}
-              (<span className="tabular-nums font-medium">{formatPct(data.pctDelObjetivo)}</span> sobre el objetivo)
+              (
+              <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-200">
+                {formatPct(data.pctDelObjetivo)}
+              </span>{' '}
+              sobre el objetivo)
             </>
           ) : null}
           .
