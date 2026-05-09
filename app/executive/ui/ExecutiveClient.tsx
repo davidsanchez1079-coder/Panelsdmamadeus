@@ -132,30 +132,31 @@ function scopeNarrative(
 ): { label: string; showDates: boolean } {
   switch (preset) {
     case 'year_natural':
-      return { label: 'el año en curso', showDates: true };
+      return { label: 'el año en curso', showDates: false };
     case 'month_natural':
-      return { label: 'el mes en curso', showDates: true };
+      return { label: 'el mes en curso', showDates: false };
     case 'last_3_months':
-      return { label: 'los últimos 3 meses', showDates: true };
+      return { label: 'los últimos 3 meses', showDates: false };
     case 'last_12_months':
-      return { label: 'los últimos 12 meses', showDates: true };
+      return { label: 'los últimos 12 meses', showDates: false };
     case 'last_7_points':
-      return { label: 'los últimos 7 registros', showDates: true };
+      return { label: 'los últimos 7 registros', showDates: false };
     case 'last_5':
-      return { label: 'los últimos 5 registros', showDates: true };
+      return { label: 'los últimos 5 registros', showDates: false };
     case 'last_1':
       return { label: 'el último registro', showDates: false };
     case 'calendar_7d':
-      return { label: 'los últimos 7 días', showDates: true };
+      return { label: 'los últimos 7 días', showDates: false };
     case 'custom_range': {
       const endCap = customRange.end && customRange.end > asOfDay ? asOfDay : customRange.end || asOfDay;
       if (customRange.start && endCap) {
         return { label: `el rango ${customRange.start} → ${endCap}`, showDates: false };
       }
+      // Solo en rango personalizado mostramos el intervalo con fechas.
       return { label: 'el rango personalizado', showDates: true };
     }
     default:
-      return { label: rangePresetShortLabel(preset, preset === 'custom_range' ? customRange : null), showDates: true };
+      return { label: rangePresetShortLabel(preset, preset === 'custom_range' ? customRange : null), showDates: false };
   }
 }
 
