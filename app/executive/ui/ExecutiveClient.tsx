@@ -125,6 +125,40 @@ function summarizeSeriesDeltaMXN(
   return { startDate, endDate, startValue, endValue, deltaPct };
 }
 
+function scopeNarrative(
+  preset: ChartRangePreset,
+  customRange: ChartCustomDateRange,
+  asOfDay: string,
+): { label: string; showDates: boolean } {
+  switch (preset) {
+    case 'year_natural':
+      return { label: 'el año en curso', showDates: true };
+    case 'month_natural':
+      return { label: 'el mes en curso', showDates: true };
+    case 'last_3_months':
+      return { label: 'los últimos 3 meses', showDates: true };
+    case 'last_12_months':
+      return { label: 'los últimos 12 meses', showDates: true };
+    case 'last_7_points':
+      return { label: 'los últimos 7 registros', showDates: true };
+    case 'last_5':
+      return { label: 'los últimos 5 registros', showDates: true };
+    case 'last_1':
+      return { label: 'el último registro', showDates: false };
+    case 'calendar_7d':
+      return { label: 'los últimos 7 días', showDates: true };
+    case 'custom_range': {
+      const endCap = customRange.end && customRange.end > asOfDay ? asOfDay : customRange.end || asOfDay;
+      if (customRange.start && endCap) {
+        return { label: `el rango ${customRange.start} → ${endCap}`, showDates: false };
+      }
+      return { label: 'el rango personalizado', showDates: true };
+    }
+    default:
+      return { label: rangePresetShortLabel(preset, preset === 'custom_range' ? customRange : null), showDates: true };
+  }
+}
+
 function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
   const v = r[k];
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
@@ -1825,12 +1859,20 @@ export function ExecutiveClient({
                         : s.deltaPct > 0
                           ? 'se ha incrementado'
                           : 'ha disminuido';
+                    const scope = scopeNarrative(rangePreset, customRange, asOfDay);
                     return (
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
                         <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
-                          <span className="font-medium">Flujo total</span> {verb} en el periodo seleccionado de{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                          <span className="font-medium">Flujo total</span> {verb} en {scope.label}
+                          {scope.showDates ? (
+                            <>
+                              {' '}
+                              de <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                              <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                            </>
+                          ) : (
+                            '.'
+                          )}
                         </div>
                         <YoYBadge kpiKey="flujo_total" deltaPct={s.deltaPct} />
                       </div>
@@ -1955,12 +1997,20 @@ export function ExecutiveClient({
                         : s.deltaPct > 0
                           ? 'se ha incrementado'
                           : 'ha disminuido';
+                    const scope = scopeNarrative(rangePreset, customRange, asOfDay);
                     return (
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
                         <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
-                          <span className="font-medium">Bancos</span> {verb} en el periodo seleccionado de{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                          <span className="font-medium">Bancos</span> {verb} en {scope.label}
+                          {scope.showDates ? (
+                            <>
+                              {' '}
+                              de <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                              <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                            </>
+                          ) : (
+                            '.'
+                          )}
                         </div>
                         <YoYBadge kpiKey="bancos_total" deltaPct={s.deltaPct} />
                       </div>
@@ -2162,12 +2212,20 @@ export function ExecutiveClient({
                         : s.deltaPct > 0
                           ? 'se ha incrementado'
                           : 'ha disminuido';
+                    const scope = scopeNarrative(rangePreset, customRange, asOfDay);
                     return (
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
                         <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
-                          <span className="font-medium">CXC</span> {verb} en el periodo seleccionado de{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                          <span className="font-medium">CXC</span> {verb} en {scope.label}
+                          {scope.showDates ? (
+                            <>
+                              {' '}
+                              de <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                              <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                            </>
+                          ) : (
+                            '.'
+                          )}
                         </div>
                         <YoYBadge kpiKey="cxc_total" deltaPct={s.deltaPct} />
                       </div>
@@ -2291,12 +2349,20 @@ export function ExecutiveClient({
                         : s.deltaPct > 0
                           ? 'se ha incrementado'
                           : 'ha disminuido';
+                    const scope = scopeNarrative(rangePreset, customRange, asOfDay);
                     return (
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
                         <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
-                          <span className="font-medium">Inventario</span> {verb} en el periodo seleccionado de{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
-                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                          <span className="font-medium">Inventario</span> {verb} en {scope.label}
+                          {scope.showDates ? (
+                            <>
+                              {' '}
+                              de <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                              <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                            </>
+                          ) : (
+                            '.'
+                          )}
                         </div>
                         <YoYBadge kpiKey="inventario_total" deltaPct={s.deltaPct} />
                       </div>
