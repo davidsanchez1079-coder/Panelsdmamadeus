@@ -60,6 +60,7 @@ import { ChartExpandIconButton } from '@/components/executive/ChartExpandIconBut
 import { ExecKPICard, type SparkTriplePoint } from '@/components/executive/ExecKPICard';
 import { AlertsBanner } from '@/components/executive/AlertsBanner';
 import { ChartDataTable } from '@/components/executive/ChartDataTable';
+import { YoYBadge } from '@/components/executive/YoYBadge';
 
 const KPI_ORDER = [
   { key: 'bancos_total', title: 'Bancos' },
@@ -99,6 +100,29 @@ function deltaPctFromChartRows(rows: ChartRow[], k: keyof ChartRow): number | nu
   if (!Number.isFinite(lastV) || !Number.isFinite(firstV)) return null;
   if (firstV === 0) return null;
   return ((lastV - firstV) / Math.abs(firstV)) * 100;
+}
+
+function summarizeSeriesDeltaMXN(
+  rows: Array<{ bucketEnd: string } & Record<string, unknown>>,
+  valueKey: string,
+): {
+  startDate: string;
+  endDate: string;
+  startValue: number;
+  endValue: number;
+  deltaPct: number | null;
+} | null {
+  if (rows.length < 2) return null;
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  const startDate = typeof first.bucketEnd === 'string' ? first.bucketEnd : '';
+  const endDate = typeof last.bucketEnd === 'string' ? last.bucketEnd : '';
+  const startValue = typeof first[valueKey] === 'number' ? (first[valueKey] as number) : NaN;
+  const endValue = typeof last[valueKey] === 'number' ? (last[valueKey] as number) : NaN;
+  if (!startDate || !endDate) return null;
+  if (!Number.isFinite(startValue) || !Number.isFinite(endValue)) return null;
+  const deltaPct = startValue === 0 ? null : ((endValue - startValue) / Math.abs(startValue)) * 100;
+  return { startDate, endDate, startValue, endValue, deltaPct };
 }
 
 function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
@@ -1792,6 +1816,26 @@ export function ExecutiveClient({
                       más ancho.
                     </p>
                   </ChartStructureInfoButton>
+                  {(() => {
+                    const s = summarizeSeriesDeltaMXN(flujoChart as unknown as Array<{ bucketEnd: string } & Record<string, unknown>>, 'flujo_total');
+                    if (!s) return null;
+                    const verb =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? 'se ha mantenido'
+                        : s.deltaPct > 0
+                          ? 'se ha incrementado'
+                          : 'ha disminuido';
+                    return (
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+                        <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                          <span className="font-medium">Flujo total</span> {verb} en el periodo seleccionado de{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                        </div>
+                        <YoYBadge kpiKey="flujo_total" deltaPct={s.deltaPct} />
+                      </div>
+                    );
+                  })()}
                   <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
                     {mounted && flujoChart.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -1902,6 +1946,26 @@ export function ExecutiveClient({
                       cada captura.
                     </p>
                   </ChartStructureInfoButton>
+                  {(() => {
+                    const s = summarizeSeriesDeltaMXN(bancosChart as unknown as Array<{ bucketEnd: string } & Record<string, unknown>>, 'total');
+                    if (!s) return null;
+                    const verb =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? 'se ha mantenido'
+                        : s.deltaPct > 0
+                          ? 'se ha incrementado'
+                          : 'ha disminuido';
+                    return (
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+                        <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                          <span className="font-medium">Bancos</span> {verb} en el periodo seleccionado de{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                        </div>
+                        <YoYBadge kpiKey="bancos_total" deltaPct={s.deltaPct} />
+                      </div>
+                    );
+                  })()}
                   <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
                     {mounted && bancosChart.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -2089,6 +2153,26 @@ export function ExecutiveClient({
                       cada línea.
                     </p>
                   </ChartStructureInfoButton>
+                  {(() => {
+                    const s = summarizeSeriesDeltaMXN(inventarioChart as unknown as Array<{ bucketEnd: string } & Record<string, unknown>>, 'cxc_total');
+                    if (!s) return null;
+                    const verb =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? 'se ha mantenido'
+                        : s.deltaPct > 0
+                          ? 'se ha incrementado'
+                          : 'ha disminuido';
+                    return (
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+                        <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                          <span className="font-medium">CXC</span> {verb} en el periodo seleccionado de{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                        </div>
+                        <YoYBadge kpiKey="cxc_total" deltaPct={s.deltaPct} />
+                      </div>
+                    );
+                  })()}
                   <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
                     {mounted && inventarioChart.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -2198,6 +2282,26 @@ export function ExecutiveClient({
                       Tres series: Sadama, Amadeus y total. En esta vista ampliada el tooltip muestra con más espacio el importe de cada línea.
                     </p>
                   </ChartStructureInfoButton>
+                  {(() => {
+                    const s = summarizeSeriesDeltaMXN(inventarioChart as unknown as Array<{ bucketEnd: string } & Record<string, unknown>>, 'inventario_total');
+                    if (!s) return null;
+                    const verb =
+                      s.deltaPct == null || !Number.isFinite(s.deltaPct) || s.deltaPct === 0
+                        ? 'se ha mantenido'
+                        : s.deltaPct > 0
+                          ? 'se ha incrementado'
+                          : 'ha disminuido';
+                    return (
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-border bg-zinc-50/80 p-3 dark:bg-zinc-950/40">
+                        <div className="min-w-0 text-sm text-zinc-700 dark:text-zinc-200">
+                          <span className="font-medium">Inventario</span> {verb} en el periodo seleccionado de{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.startDate)}</span> a{' '}
+                          <span className="font-medium tabular-nums">{formatCierreLabel(s.endDate)}</span>.
+                        </div>
+                        <YoYBadge kpiKey="inventario_total" deltaPct={s.deltaPct} />
+                      </div>
+                    );
+                  })()}
                   <div className="chart-root w-full text-foreground" style={{ height: fullscreenChartHeight }}>
                     {mounted && inventarioChart.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
