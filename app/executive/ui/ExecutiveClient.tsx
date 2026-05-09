@@ -89,6 +89,18 @@ function pickYoY(yoy: Record<string, YoYDelta> | null | undefined, kpiKey: strin
   return d && typeof d === 'object' ? d : null;
 }
 
+function deltaPctFromChartRows(rows: ChartRow[], k: keyof ChartRow): number | null {
+  if (rows.length < 2) return null;
+  const last = rows[rows.length - 1];
+  const prev = rows[rows.length - 2];
+  const lastV = last ? (last[k] as unknown) : null;
+  const prevV = prev ? (prev[k] as unknown) : null;
+  if (typeof lastV !== 'number' || typeof prevV !== 'number') return null;
+  if (!Number.isFinite(lastV) || !Number.isFinite(prevV)) return null;
+  if (prevV === 0) return null;
+  return ((lastV - prevV) / Math.abs(prevV)) * 100;
+}
+
 function numFromChartRow(r: ChartRow, k: keyof ChartRow): number {
   const v = r[k];
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
@@ -904,7 +916,8 @@ export function ExecutiveClient({
           const fallback = typeof raw === 'number' ? raw : null;
           const fromSeries = lastBucket && typeof lastBucket[key] === 'number' ? (lastBucket[key] as number) : null;
           const value = fromSeries ?? fallback;
-          const deltaPct = pickYoY(yoy, key)?.delta_pct ?? null;
+          // El badge debe reflejar el periodo/agrupación seleccionados (último vs anterior en la serie graficada).
+          const deltaPct = deltaPctFromChartRows(chartRows, key);
           const sparkTriple = buildSparkTripleFromChartRows(chartRows, key);
           const sparkTripleTable = buildSparkTripleFromDailyPoints(kpiTableDailySlice, key);
           return (

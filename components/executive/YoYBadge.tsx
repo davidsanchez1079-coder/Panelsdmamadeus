@@ -11,7 +11,7 @@ export function YoYBadge({
   kpiKey: string;
   deltaPct: number | null | undefined;
   className?: string;
-  /** Tooltip; por defecto variación vs mismo mes año anterior. */
+  /** Tooltip; si no se pasa, el default depende del contexto. */
   title?: string;
 }) {
   const polarity = getPolarity(kpiKey);
@@ -34,7 +34,7 @@ export function YoYBadge({
         styles,
         className,
       )}
-      title={titleProp ?? 'Variación vs mismo mes del año anterior'}
+      title={titleProp ?? 'Variación vs punto anterior en el periodo seleccionado'}
     >
       <span aria-hidden="true">{arrow}</span>
       <span>{formatPct(deltaPct)}</span>
