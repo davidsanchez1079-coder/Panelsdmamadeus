@@ -62,6 +62,34 @@ import { AlertsBanner } from '@/components/executive/AlertsBanner';
 import { ChartDataTable } from '@/components/executive/ChartDataTable';
 import { YoYBadge } from '@/components/executive/YoYBadge';
 
+function CxpSortedLegend({ payload, wide }: { payload?: unknown[]; wide?: boolean }) {
+  const items = (payload ?? [])
+    .map((p) => p as { value?: unknown; color?: string; payload?: { pct?: number; value?: number; name?: string } })
+    .map((p) => ({
+      value: typeof p.payload?.value === 'number' ? p.payload.value : typeof p.value === 'number' ? p.value : 0,
+      pct: p.payload?.pct,
+      name: p.payload?.name,
+      color: p.color,
+    }))
+    .filter((x) => x.name)
+    .sort((a, b) => b.value - a.value);
+
+  if (items.length === 0) return null;
+  return (
+    <ul className={cn('mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1', wide ? 'text-sm' : 'text-xs')}>
+      {items.map((it) => (
+        <li key={String(it.name)} className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: it.color }} aria-hidden />
+          <span className="text-zinc-700 dark:text-zinc-200">
+            {it.name}
+            {it.pct != null && Number.isFinite(it.pct) ? <span className="tabular-nums text-zinc-500 dark:text-zinc-400"> ({formatPct(it.pct)})</span> : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 const KPI_ORDER = [
   { key: 'bancos_total', title: 'Bancos' },
   { key: 'inventario_total', title: 'Inventario' },
@@ -1483,13 +1511,7 @@ export function ExecutiveClient({
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip content={<CxpPieTooltip />} />
-                  <Legend
-                    formatter={(value, entry) => {
-                      const p = entry.payload as { pct?: number; name?: string } | undefined;
-                      if (p?.pct != null && Number.isFinite(p.pct)) return `${value} (${formatPct(p.pct)})`;
-                      return String(value);
-                    }}
-                  />
+                  <Legend content={(props) => <CxpSortedLegend payload={props.payload as unknown[]} />} />
                   <Pie
                     data={cxpVista.pie}
                     dataKey="value"
@@ -2341,12 +2363,7 @@ export function ExecutiveClient({
                             )}
                           />
                           <Legend
-                            wrapperStyle={{ fontSize: 13 }}
-                            formatter={(value, entry) => {
-                              const p = entry.payload as { pct?: number; name?: string } | undefined;
-                              if (p?.pct != null && Number.isFinite(p.pct)) return `${value} (${formatPct(p.pct)})`;
-                              return String(value);
-                            }}
+                            content={(props) => <CxpSortedLegend payload={props.payload as unknown[]} wide />}
                           />
                           <Pie
                             data={cxpVista.pie}
